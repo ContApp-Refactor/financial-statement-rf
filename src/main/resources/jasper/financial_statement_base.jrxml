@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD Report Design//EN"
+        "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport name="financial_statement_base"
+              pageWidth="792"
+              pageHeight="612"
+              orientation="Landscape"
+              columnWidth="732"
+              leftMargin="30"
+              rightMargin="30"
+              topMargin="25"
+              bottomMargin="25"
+              whenNoDataType="AllSectionsNoDetail">
+
+    <style name="EnterpriseTitle" fontName="SansSerif" fontSize="10" isBold="true"/>
+    <style name="ReportTitle" fontName="SansSerif" fontSize="12" isBold="true"/>
+    <style name="Metadata" fontName="SansSerif" fontSize="8"/>
+    <style name="Criteria" fontName="SansSerif" fontSize="9"/>
+
+    <parameter name="REPORT_NAME" class="java.lang.String"/>
+    <parameter name="ENTERPRISE_NAME" class="java.lang.String"/>
+    <parameter name="GENERATED_AT" class="java.lang.String"/>
+    <parameter name="CRITERIA_TEXT" class="java.lang.String"/>
+    <parameter name="LOGO_PATH" class="java.lang.String"/>
+
+    <title>
+        <band height="130">
+            <image scaleImage="RetainShape" onErrorType="Blank">
+                <reportElement x="0" y="0" width="80" height="40">
+                    <printWhenExpression><![CDATA[$P{LOGO_PATH} != null && !$P{LOGO_PATH}.trim().isEmpty()]]></printWhenExpression>
+                </reportElement>
+                <imageExpression><![CDATA[$P{LOGO_PATH}]]></imageExpression>
+            </image>
+            <textField>
+                <reportElement style="EnterpriseTitle" x="0" y="0" width="732" height="20"/>
+                <textFieldExpression><![CDATA[$P{ENTERPRISE_NAME}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="ReportTitle" x="0" y="22" width="732" height="22"/>
+                <textFieldExpression><![CDATA[$P{REPORT_NAME}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Metadata" x="0" y="46" width="732" height="14"/>
+                <textFieldExpression><![CDATA[$P{GENERATED_AT}]]></textFieldExpression>
+            </textField>
+            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
+                <reportElement style="Criteria" x="0" y="62" width="732" height="56"/>
+                <textFieldExpression><![CDATA[$P{CRITERIA_TEXT}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+</jasperReport>

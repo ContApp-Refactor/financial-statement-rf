@@ -1,0 +1,111 @@
+spring:
+  config:
+    import: optional:classpath:application-local-private.yml
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/financial_statement
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
+    open-in-view: false
+
+  flyway:
+    enabled: false
+
+  h2:
+    console:
+      enabled: false
+
+  cloud:
+    discovery:
+      enabled: ${SPRING_CLOUD_DISCOVERY_ENABLED:false}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8090/auth/realms/oauth2-realm
+          jwk-set-uri: http://localhost:8090/auth/realms/oauth2-realm/protocol/openid-connect/certs
+
+  mail:
+    host: ""
+    port: 587
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+mail:
+  provider: smtp
+  from: no-reply@contapp.local
+  resend:
+    api-key: ""
+    reply-to: ""
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}
+    register-with-eureka: ${EUREKA_REGISTER:false}
+    fetch-registry: ${EUREKA_FETCH:false}
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+
+jwt:
+  auth:
+    converter:
+      principle-attribute: preferred_username
+      resource-id: microservices_client
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+cors:
+  allowed-origins: http://localhost:4200,http://localhost:4300
+
+security:
+  auth:
+    enabled: false
+
+services:
+  account-info-service:
+    base-url: ${ACCOUNT_INFO_SERVICE_URL:http://localhost:4001/accountInfo}
+    bearer-token: ${ACCOUNT_INFO_SERVICE_BEARER_TOKEN:}
+    mock-mode-enabled: ${ACCOUNT_INFO_SERVICE_MOCK_MODE_ENABLED:true}
+    accept-legacy-date-format: ${ACCOUNT_INFO_SERVICE_ACCEPT_LEGACY_DATE_FORMAT:true}
+
+report-email:
+  scheduler:
+    fixed-delay-ms: 60000
+    default-timezone: America/Bogota
+    claim-lease-ms: 300000
+    failure-retry-delay-ms: 300000

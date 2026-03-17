@@ -1,0 +1,11 @@
+﻿spring:
+  application:
+    name: financial-statement
+
+  profiles:
+    active:
+      - ${PROFILE:local}
+
+server:
+  error:
+    include-stacktrace: never

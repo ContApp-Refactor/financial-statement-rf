@@ -1,0 +1,37 @@
+package com.unicauca.edu.co.financial_statements.application.useCase.financialStatement;
+
+public record FinancialPositionAmounts(
+        ComparativeAmount efectivo,
+        ComparativeAmount deudores,
+        ComparativeAmount activosFinancierosTemporales,
+        ComparativeAmount inventarios,
+        ComparativeAmount impuestosCorrientes,
+        ComparativeAmount activosBiologicos,
+        ComparativeAmount activosMantenidosVenta,
+        ComparativeAmount propiedadPlantaEquipo,
+        ComparativeAmount activosFinancierosPermanentes,
+        ComparativeAmount intangibles,
+        ComparativeAmount propiedadesInversion,
+        ComparativeAmount otrosActivos,
+        ComparativeAmount acreedores,
+        ComparativeAmount pasivosFinancieros,
+        ComparativeAmount pasivosImpuestosCorrientes,
+        ComparativeAmount provision,
+        ComparativeAmount pasivosFinancierosLargoPlazo,
+        ComparativeAmount pasivosImpuestosDiferidos,
+        ComparativeAmount capitalSuscrito,
+        ComparativeAmount reservas,
+        ComparativeAmount utilidadesAcumuladas,
+        ComparativeAmount utilidadesEjercicio,
+        ComparativeAmount dividendosDecretados,
+        ComparativeAmount accionesPropias,
+        ComparativeAmount primaEmision,
+        ComparativeAmount totalActivoCorriente,
+        ComparativeAmount totalActivoNoCorriente,
+        ComparativeAmount totalActivos,
+        ComparativeAmount totalPasivoCorriente,
+        ComparativeAmount totalPasivoNoCorriente,
+        ComparativeAmount totalPasivos,
+        ComparativeAmount totalPatrimonio
+) {
+}
