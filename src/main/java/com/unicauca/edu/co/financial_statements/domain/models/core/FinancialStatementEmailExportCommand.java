@@ -20,6 +20,8 @@ public class FinancialStatementEmailExportCommand {
     private String enterpriseName;
     private Map<String, Object> financialStatement;
     private List<FinancialStatementRow> financialStatementData;
+    private List<FinancialStatementAnnotation> annotations;
+    private FinancialStatementVisualSignature visualSignature;
     private FinancialStatementExportStyle exportStyle;
     private String toEmail;
 }

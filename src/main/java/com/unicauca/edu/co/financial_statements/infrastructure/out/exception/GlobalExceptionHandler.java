@@ -1,7 +1,10 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.out.exception;
 
+import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementGenerationException;
+import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementSignatureException;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.ResponseDTO;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.clients.accountingInfo.AccountInfoClientException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -10,16 +13,40 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(FinancialStatementGenerationException.class)
+    public ResponseEntity<ResponseDTO<Void>> handleGenerationException(FinancialStatementGenerationException ex) {
+        log.error("Financial statement generation failed.", ex);
+        return ResponseDTO.<Void>builder()
+                .statusCode(HttpStatus.BAD_GATEWAY.value())
+                .code(HttpStatus.BAD_GATEWAY.value())
+                .message("Error al generar el reporte. Intente más tarde")
+                .build()
+                .of();
+    }
+
+    @ExceptionHandler(FinancialStatementSignatureException.class)
+    public ResponseEntity<ResponseDTO<Void>> handleSignatureException(FinancialStatementSignatureException ex) {
+        log.error("Financial statement signature processing failed.", ex);
+        return ResponseDTO.<Void>builder()
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .message(ex.getMessage())
+                .build()
+                .of();
+    }
 
     @ExceptionHandler(AccountInfoClientException.class)
     public ResponseEntity<ResponseDTO<Void>> handleAccountingIntegration(AccountInfoClientException ex) {
         HttpStatus status = ex.getStatus() != null ? ex.getStatus() : HttpStatus.BAD_GATEWAY;
+        log.error("Accounting integration error.", ex);
 
         return ResponseDTO.<Void>builder()
                 .statusCode(status.value())
                 .code(status.value())
-                .message(ex.getMessage())
+                .message("Error al generar el reporte. Intente más tarde")
                 .build()
                 .of();
     }
@@ -70,10 +97,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseDTO<Void>> handleGeneralException(Exception ex) {
+        log.error("Unexpected financial statement error.", ex);
         return ResponseDTO.<Void>builder()
                 .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("An unexpected error occurred: " + ex.getMessage())
+                .message("Ocurrio un error inesperado. Intente nuevamente mas tarde.")
                 .build()
                 .of();
     }

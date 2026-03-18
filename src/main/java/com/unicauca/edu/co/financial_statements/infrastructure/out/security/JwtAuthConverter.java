@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 @Component
-public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken>, IJwtUtils {
+public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
@@ -27,15 +28,11 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
     @Value("${jwt.auth.converter.resource-id}")
     private String resourceId;
 
-    private Jwt jwtToken;
-
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
         Collection<GrantedAuthority> authorities = Stream
                 .concat(jwtGrantedAuthoritiesConverter.convert(jwt).stream(), extractResourceRoles(jwt).stream())
                 .toList();
-
-        this.jwtToken = jwt;
 
         return new JwtAuthenticationToken(jwt, authorities, getPrincipleName(jwt));
     }
@@ -47,7 +44,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
             claimName = principleAttribute;
         }
 
-        return jwt.getClaim(claimName);
+        return getRequiredClaimAsString(jwt, claimName);
     }
 
     @SuppressWarnings("unchecked")
@@ -75,8 +72,11 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
                 .toList();
     }
 
-    @Override
-    public String getId() {
-        return (String) jwtToken.getClaims().get("sub");
+    private String getRequiredClaimAsString(Jwt jwt, String claimName) {
+        String value = jwt.getClaimAsString(claimName);
+        if (!StringUtils.hasText(value)) {
+            throw new IllegalArgumentException("JWT claim '" + claimName + "' is required.");
+        }
+        return value;
     }
 }

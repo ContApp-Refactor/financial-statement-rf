@@ -9,7 +9,6 @@ import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStat
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportStyle;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementGenerationResult;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementReport;
-import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementTemplate;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EDeliveryWay;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportDeliveryFrequency;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
@@ -39,6 +38,7 @@ public class FinancialStatementEmailScheduleUC implements IFinancialStatementEma
     private final IFinancialStatementPersistencePort financialStatementPersistencePort;
     private final IFinancialStatementCommandPort financialStatementCommandPort;
     private final IFinancialStatementDeliveryPort financialStatementDeliveryPort;
+    private final FinancialStatementTemplateExportStyleMapper financialStatementTemplateExportStyleMapper;
 
     @Value("${report-email.scheduler.default-timezone:America/Bogota}")
     private String defaultTimezone;
@@ -171,7 +171,7 @@ public class FinancialStatementEmailScheduleUC implements IFinancialStatementEma
             FinancialStatementReport report = snapshot.getFinancialStatement();
             FinancialStatementExportStyle exportStyle = financialStatementCommandPort
                     .getDefaultTemplateByEnterprise(report.getEntId())
-                    .map(this::toExportStyle)
+                    .map(financialStatementTemplateExportStyleMapper::toExportStyle)
                     .orElse(null);
 
             financialStatementDeliveryPort.exportByEmail(
@@ -227,20 +227,6 @@ public class FinancialStatementEmailScheduleUC implements IFinancialStatementEma
                 .lastRunAt(entity.getLastRunAt())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    private FinancialStatementExportStyle toExportStyle(FinancialStatementTemplate template) {
-        if (template == null) {
-            return null;
-        }
-
-        return FinancialStatementExportStyle.builder()
-                .pathLogotype(template.getPathLogotype())
-                .alignment(template.getAlignment())
-                .font(template.getFont())
-                .fontSize(template.getFontSize())
-                .mainColor(template.getMainColor())
                 .build();
     }
 

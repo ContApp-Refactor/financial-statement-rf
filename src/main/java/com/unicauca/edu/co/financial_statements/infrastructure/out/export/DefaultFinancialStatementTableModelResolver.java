@@ -34,7 +34,9 @@ class DefaultFinancialStatementTableModelResolver implements FinancialStatementT
             String enterpriseName,
             List<Map<String, Object>> rawRows,
             List<FinancialStatementRow> typedRows,
-            Map<String, Object> financialStatement
+            Map<String, Object> financialStatement,
+            List<String> annotationTexts,
+            byte[] signatureImage
     ) {
         List<String> columns;
         List<Map<String, Object>> rows;
@@ -72,13 +74,16 @@ class DefaultFinancialStatementTableModelResolver implements FinancialStatementT
             rows = List.of(singleMessageRow(columns.size(), "No data available"));
         }
 
+        appendAnnotations(rows, columns.size(), annotationTexts);
+
         return new FinancialStatementTableModel(
                 reportName,
                 enterpriseName,
                 LocalDateTime.now().format(GENERATED_AT_FORMAT),
                 buildCriteriaText(financialStatement),
                 columns,
-                rows
+                rows,
+                signatureImage
         );
     }
 
@@ -191,5 +196,23 @@ class DefaultFinancialStatementTableModelResolver implements FinancialStatementT
         }
         String text = String.valueOf(value).trim();
         return StringUtils.hasText(text) ? text : "";
+    }
+
+    private void appendAnnotations(List<Map<String, Object>> rows, int columnCount, List<String> annotationTexts) {
+        if (rows == null || annotationTexts == null || annotationTexts.isEmpty()) {
+            return;
+        }
+
+        rows.add(singleMessageRow(columnCount, ""));
+        rows.add(singleMessageRow(columnCount, "ANOTACIONES"));
+
+        int annotationIndex = 1;
+        for (String annotationText : annotationTexts) {
+            if (!StringUtils.hasText(annotationText)) {
+                continue;
+            }
+            rows.add(singleMessageRow(columnCount, annotationIndex + ". " + annotationText.trim()));
+            annotationIndex++;
+        }
     }
 }

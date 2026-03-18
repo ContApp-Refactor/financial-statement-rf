@@ -19,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.http.HttpHeaders.ACCEPT;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
@@ -47,6 +49,7 @@ class AccountInfoClientTest {
     void shouldMapValidIsoPayload() {
         server.expect(ExpectedCount.once(), requestTo(containsString("entId=ENT-001")))
                 .andExpect(method(HttpMethod.GET))
+                .andExpect(header(ACCEPT, MediaType.APPLICATION_JSON_VALUE))
                 .andRespond(withSuccess("""
                         [
                           {

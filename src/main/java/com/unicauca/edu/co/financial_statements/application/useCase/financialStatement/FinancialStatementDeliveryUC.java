@@ -4,6 +4,7 @@ import com.unicauca.edu.co.financial_statements.application.ports.in.financialSt
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementDeliveryPort;
 import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementExportPort;
 import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementMailPort;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementAnnotation;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementDocument;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementEmailExportCommand;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportCommand;
@@ -11,7 +12,7 @@ import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStat
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementRow;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportStyle;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementReport;
-import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementTemplate;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementVisualSignature;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EDeliveryWay;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,8 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
     private final IFinancialStatementMailPort financialStatementMailPort;
     private final FinancialStatementReportNameResolver reportNameResolver;
     private final FinancialStatementRowMapper financialStatementRowMapper;
+    private final FinancialStatementReportMetadataMapper financialStatementReportMetadataMapper;
+    private final FinancialStatementTemplateExportStyleMapper financialStatementTemplateExportStyleMapper;
 
     @Override
     public FinancialStatementDocument export(FinancialStatementExportCommand command) {
@@ -45,7 +48,9 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 safeCommand.getEnterpriseName(),
                 safeCommand.getFinancialStatementData(),
                 safeCommand.getFinancialStatement(),
-                safeCommand.getExportStyle()
+                safeCommand.getExportStyle(),
+                safeCommand.getAnnotations(),
+                safeCommand.getVisualSignature()
         );
 
         IFinancialStatementExportPort.ExportedDocument exportedDocument = financialStatementExportPort.export(
@@ -54,7 +59,9 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 context.enterpriseName(),
                 financialStatementRowMapper.toRowMaps(context.dataRows()),
                 context.financialStatement(),
-                context.exportStyle()
+                context.exportStyle(),
+                toAnnotationTexts(context.annotations()),
+                context.visualSignature()
         );
 
         if (safeCommand.getReportId() != null) {
@@ -80,7 +87,9 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 command.getEnterpriseName(),
                 command.getFinancialStatementData(),
                 command.getFinancialStatement(),
-                command.getExportStyle()
+                command.getExportStyle(),
+                command.getAnnotations(),
+                command.getVisualSignature()
         );
 
         IFinancialStatementExportPort.ExportedDocument exportedDocument = financialStatementExportPort.export(
@@ -89,7 +98,9 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 context.enterpriseName(),
                 financialStatementRowMapper.toRowMaps(context.dataRows()),
                 context.financialStatement(),
-                context.exportStyle()
+                context.exportStyle(),
+                toAnnotationTexts(context.annotations()),
+                context.visualSignature()
         );
 
         financialStatementMailPort.sendReport(
@@ -132,7 +143,9 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 StringUtils.hasText(report.getEntId()) ? report.getEntId() : "Enterprise",
                 financialStatementRowMapper.toRowMaps(snapshot.getFinancialStatementData()),
                 buildFinancialStatementMetadata(snapshot),
-                resolveDefaultExportStyle(report.getEntId())
+                resolveDefaultExportStyle(report.getEntId()),
+                toAnnotationTexts(snapshot.getAnnotations()),
+                null
         );
 
         financialStatementCommandPort.registerDeliveryEvent(
@@ -150,16 +163,20 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
             String enterpriseName,
             List<FinancialStatementRow> dataRows,
             Map<String, Object> financialStatement,
-            FinancialStatementExportStyle requestedExportStyle
+            FinancialStatementExportStyle requestedExportStyle,
+            List<FinancialStatementAnnotation> requestedAnnotations,
+            FinancialStatementVisualSignature requestedVisualSignature
     ) {
         String requestedEnterpriseName = enterpriseName;
         String resolvedEnterpriseName = null;
         String resolvedReportName = null;
         List<FinancialStatementRow> resolvedRows = dataRows != null ? dataRows : List.of();
+        List<FinancialStatementAnnotation> resolvedAnnotations = requestedAnnotations != null ? requestedAnnotations : List.of();
         Map<String, Object> resolvedFinancialStatement = financialStatement != null
                 ? new LinkedHashMap<>(financialStatement)
                 : new LinkedHashMap<>();
         FinancialStatementExportStyle resolvedExportStyle = requestedExportStyle;
+        FinancialStatementVisualSignature resolvedVisualSignature = requestedVisualSignature;
 
         boolean equityChangesRequested = "STATEMENT_CHANGES_EQUITY".equalsIgnoreCase(
                 String.valueOf(resolvedFinancialStatement.get("type"))
@@ -181,10 +198,15 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 if (resolvedRows.isEmpty() || requiresSnapshotRows) {
                     resolvedRows = snapshot.getFinancialStatementData();
                 }
+                if (resolvedAnnotations.isEmpty()) {
+                    resolvedAnnotations = snapshot.getAnnotations() != null ? snapshot.getAnnotations() : List.of();
+                }
 
                 if (snapshot.getFinancialStatement() != null) {
                     resolvedEnterpriseName = snapshot.getFinancialStatement().getEntId();
-                    resolvedFinancialStatement.putAll(buildFinancialStatementMetadata(snapshot));
+                    resolvedFinancialStatement.putAll(
+                            financialStatementReportMetadataMapper.toMetadataMap(snapshot.getFinancialStatement())
+                    );
                     resolvedReportName = reportNameResolver.resolve(snapshot.getFinancialStatement().getType());
                 }
             }
@@ -220,8 +242,10 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 resolvedEnterpriseName,
                 resolvedReportName,
                 resolvedRows,
+                resolvedAnnotations,
                 resolvedFinancialStatement,
-                resolvedExportStyle
+                resolvedExportStyle,
+                resolvedVisualSignature
         );
     }
 
@@ -238,18 +262,9 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
     }
 
     private Map<String, Object> buildFinancialStatementMetadata(FinancialStatementGenerationResult snapshot) {
-        Map<String, Object> metadata = new LinkedHashMap<>();
-        if (snapshot == null || snapshot.getFinancialStatement() == null) {
-            return metadata;
-        }
-
-        FinancialStatementReport report = snapshot.getFinancialStatement();
-        metadata.put("reportId", report.getReportId());
-        metadata.put("type", report.getType() != null ? report.getType().name() : null);
-        metadata.put("entId", report.getEntId());
-        metadata.put("criteria", report.getCriteria());
-        metadata.put("createdAt", report.getCreatedAt());
-        return metadata;
+        return snapshot != null
+                ? financialStatementReportMetadataMapper.toMetadataMap(snapshot.getFinancialStatement())
+                : new LinkedHashMap<>();
     }
 
     private FinancialStatementDocument toDocument(IFinancialStatementExportPort.ExportedDocument exportedDocument) {
@@ -262,30 +277,30 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
 
     private FinancialStatementExportStyle resolveDefaultExportStyle(String enterpriseId) {
         return financialStatementCommandPort.getDefaultTemplateByEnterprise(enterpriseId)
-                .map(this::toExportStyle)
+                .map(financialStatementTemplateExportStyleMapper::toExportStyle)
                 .orElse(null);
     }
 
-    private FinancialStatementExportStyle toExportStyle(FinancialStatementTemplate template) {
-        if (template == null) {
-            return null;
+    private List<String> toAnnotationTexts(List<FinancialStatementAnnotation> annotations) {
+        if (annotations == null || annotations.isEmpty()) {
+            return List.of();
         }
 
-        return FinancialStatementExportStyle.builder()
-                .pathLogotype(template.getPathLogotype())
-                .alignment(template.getAlignment())
-                .font(template.getFont())
-                .fontSize(template.getFontSize())
-                .mainColor(template.getMainColor())
-                .build();
+        return annotations.stream()
+                .filter(Objects::nonNull)
+                .map(FinancialStatementAnnotation::getText)
+                .filter(StringUtils::hasText)
+                .toList();
     }
 
     private record ExportContext(
             String enterpriseName,
             String reportName,
             List<FinancialStatementRow> dataRows,
+            List<FinancialStatementAnnotation> annotations,
             Map<String, Object> financialStatement,
-            FinancialStatementExportStyle exportStyle
+            FinancialStatementExportStyle exportStyle,
+            FinancialStatementVisualSignature visualSignature
     ) {
     }
 }

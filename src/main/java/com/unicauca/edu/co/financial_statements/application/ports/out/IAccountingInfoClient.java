@@ -8,4 +8,5 @@ import java.util.List;
 public interface IAccountingInfoClient {
 
     List<AccountingEntry> findAccountingEntries(String entId, LocalDate startDate, LocalDate endDate);
+    
 }

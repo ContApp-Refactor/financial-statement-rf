@@ -10,19 +10,23 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 @Component
 public class EquityChangesAmountCalculator {
 
     private final AccountingEntryOperations accountingEntryOperations;
-    private final IncomeStatementAmountCalculator incomeStatementAmountCalculator;
+    private final FinancialPositionEntryClassifier financialPositionEntryClassifier;
+    private final PeriodResultCalculator periodResultCalculator;
 
     public EquityChangesAmountCalculator(
             AccountingEntryOperations accountingEntryOperations,
-            IncomeStatementAmountCalculator incomeStatementAmountCalculator
+            FinancialPositionEntryClassifier financialPositionEntryClassifier,
+            PeriodResultCalculator periodResultCalculator
     ) {
         this.accountingEntryOperations = accountingEntryOperations;
-        this.incomeStatementAmountCalculator = incomeStatementAmountCalculator;
+        this.financialPositionEntryClassifier = financialPositionEntryClassifier;
+        this.periodResultCalculator = periodResultCalculator;
     }
 
     public EquityChangesAmounts calculate(
@@ -45,17 +49,17 @@ public class EquityChangesAmountCalculator {
         BigDecimal currentRetainedBase = sumEquityComponentValue(safeCurrentEntries, "36");
         BigDecimal previousRetainedBase = sumEquityComponentValue(safePreviousEntries, "36");
 
-        BigDecimal currentDividends = sumDividendValue(safeCurrentEntries);
-        BigDecimal previousDividends = sumDividendValue(safePreviousEntries);
+        BigDecimal currentDividends = sumByMatcher(safeCurrentEntries, financialPositionEntryClassifier::isDividendEntry);
+        BigDecimal previousDividends = sumByMatcher(safePreviousEntries, financialPositionEntryClassifier::isDividendEntry);
 
-        BigDecimal currentTreasuryShares = sumByNameContainsAll(safeCurrentEntries, "acciones", "readquir");
-        BigDecimal previousTreasuryShares = sumByNameContainsAll(safePreviousEntries, "acciones", "readquir");
+        BigDecimal currentTreasuryShares = sumByMatcher(safeCurrentEntries, financialPositionEntryClassifier::isTreasuryShareEntry);
+        BigDecimal previousTreasuryShares = sumByMatcher(safePreviousEntries, financialPositionEntryClassifier::isTreasuryShareEntry);
 
-        BigDecimal currentSharePremium = sumByNameContainsAll(safeCurrentEntries, "prima", "emision");
-        BigDecimal previousSharePremium = sumByNameContainsAll(safePreviousEntries, "prima", "emision");
+        BigDecimal currentSharePremium = sumByMatcher(safeCurrentEntries, financialPositionEntryClassifier::isSharePremiumEntry);
+        BigDecimal previousSharePremium = sumByMatcher(safePreviousEntries, financialPositionEntryClassifier::isSharePremiumEntry);
 
-        BigDecimal currentNetIncome = incomeStatementAmountCalculator.calculateNetIncomeForCutoff(safeCurrentEntries, currentCutoffDate);
-        BigDecimal previousNetIncome = incomeStatementAmountCalculator.calculateNetIncomeForCutoff(safePreviousEntries, previousCutoffDate);
+        BigDecimal currentNetIncome = periodResultCalculator.resolveResultForCutoff(safeCurrentEntries, currentCutoffDate);
+        BigDecimal previousNetIncome = periodResultCalculator.resolveResultForCutoff(safePreviousEntries, previousCutoffDate);
 
         BigDecimal currentCapital = scaleAmount(currentCapitalBase.add(currentSharePremium));
         BigDecimal previousCapital = scaleAmount(previousCapitalBase.add(previousSharePremium));
@@ -130,16 +134,16 @@ public class EquityChangesAmountCalculator {
             BigDecimal capitalBase = sumEquityComponentValue(entriesUpToCutoff, "31");
             BigDecimal reserves = sumEquityComponentValue(entriesUpToCutoff, "33");
             BigDecimal retainedBase = sumEquityComponentValue(entriesUpToCutoff, "36");
-            BigDecimal dividends = sumDividendValue(entriesUpToCutoff);
-            BigDecimal treasuryShares = sumByNameContainsAll(entriesUpToCutoff, "acciones", "readquir");
-            BigDecimal sharePremium = sumByNameContainsAll(entriesUpToCutoff, "prima", "emision");
+            BigDecimal dividends = sumByMatcher(entriesUpToCutoff, financialPositionEntryClassifier::isDividendEntry);
+            BigDecimal treasuryShares = sumByMatcher(entriesUpToCutoff, financialPositionEntryClassifier::isTreasuryShareEntry);
+            BigDecimal sharePremium = sumByMatcher(entriesUpToCutoff, financialPositionEntryClassifier::isSharePremiumEntry);
             BigDecimal capital = scaleAmount(capitalBase.add(sharePremium));
             BigDecimal retainedEarnings = scaleAmount(
                     retainedBase
                             .subtract(dividends)
                             .subtract(treasuryShares)
             );
-            BigDecimal netIncome = incomeStatementAmountCalculator.calculateNetIncomeForCutoff(entriesUpToCutoff, yearCutoffDate);
+            BigDecimal netIncome = periodResultCalculator.resolveResultForCutoff(entriesUpToCutoff, yearCutoffDate);
             BigDecimal totalEquity = scaleAmount(capital.add(reserves).add(retainedEarnings).add(netIncome));
 
             snapshots.put(
@@ -184,54 +188,15 @@ public class EquityChangesAmountCalculator {
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 
-    private BigDecimal sumDividendValue(List<AccountingEntry> entries) {
-        if (entries == null || entries.isEmpty()) {
+    private BigDecimal sumByMatcher(List<AccountingEntry> entries, Predicate<AccountingEntry> matcher) {
+        if (entries == null || entries.isEmpty() || matcher == null) {
             return scaleAmount(BigDecimal.ZERO);
         }
 
         return scaleAmount(entries.stream()
-                .filter(entry -> {
-                    if (entry == null) {
-                        return false;
-                    }
-
-                    String code = accountingEntryOperations.resolveAccountCode(entry);
-                    String accountName = entry.getAccountName() != null
-                            ? entry.getAccountName().toLowerCase()
-                            : "";
-
-                    return StringUtils.hasText(code)
-                            && (code.startsWith("37")
-                            || (code.startsWith("3") && containsAny(accountName, "dividendo", "dividendos")));
-                })
+                .filter(entry -> entry != null && matcher.test(entry))
                 .map(accountingEntryOperations::signedAmountByNature)
-                .map(BigDecimal::abs)
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
-    }
-
-    private BigDecimal sumByNameContainsAll(List<AccountingEntry> entries, String... tokens) {
-        if (entries == null || entries.isEmpty() || tokens == null || tokens.length == 0) {
-            return scaleAmount(BigDecimal.ZERO);
-        }
-
-        List<String> normalizedTokens = java.util.Arrays.stream(tokens)
-                .filter(StringUtils::hasText)
-                .map(String::toLowerCase)
-                .toList();
-
-        if (normalizedTokens.isEmpty()) {
-            return scaleAmount(BigDecimal.ZERO);
-        }
-
-        return scaleAmount(entries.stream()
-                .filter(entry -> entry != null && StringUtils.hasText(entry.getAccountName()))
-                .filter(entry -> {
-                    String name = entry.getAccountName().toLowerCase();
-                    return normalizedTokens.stream().allMatch(name::contains);
-                })
-                .map(accountingEntryOperations::signedAmountByNature)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .abs());
     }
 
     private List<AccountingEntry> filterEntriesUpToCutoff(List<AccountingEntry> entries, LocalDate cutoffDate) {
@@ -242,19 +207,6 @@ public class EquityChangesAmountCalculator {
         return entries.stream()
                 .filter(entry -> entry != null && entry.getDate() != null && !entry.getDate().isAfter(cutoffDate))
                 .toList();
-    }
-
-    private boolean containsAny(String value, String... tokens) {
-        if (!StringUtils.hasText(value) || tokens == null || tokens.length == 0) {
-            return false;
-        }
-
-        for (String token : tokens) {
-            if (StringUtils.hasText(token) && value.contains(token.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private ComparativeAmount comparative(BigDecimal current, BigDecimal previous) {

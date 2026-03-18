@@ -1,11 +1,13 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.out.persistence;
 
 import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementPersistencePort;
+import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementAnnotationEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementEmailScheduleEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementHistoryEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementLogEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementTemplateEntity;
+import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.repository.IFinancialStatementAnnotationRepository;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.repository.IFinancialStatementEmailScheduleRepository;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.repository.IFinancialStatementRepository;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.repository.IFinancialStatementHistoryRepository;
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class FinancialStatementPersistenceAdapter implements IFinancialStatementPersistencePort {
 
     private final IFinancialStatementRepository financialStatementRepository;
+    private final IFinancialStatementAnnotationRepository financialStatementAnnotationRepository;
     private final IFinancialStatementHistoryRepository financialStatementHistoryRepository;
     private final IFinancialStatementLogRepository financialStatementLogRepository;
     private final IFinancialStatementTemplateRepository financialStatementTemplateRepository;
@@ -84,6 +87,31 @@ public class FinancialStatementPersistenceAdapter implements IFinancialStatement
     @Override
     public Optional<FinancialStatementTemplateEntity> findDefaultTemplateByEnterprise(String entId) {
         return financialStatementTemplateRepository.findByEntIdAndIsDefaultTrue(entId);
+    }
+
+    @Override
+    public void deleteTemplate(FinancialStatementTemplateEntity entity) {
+        financialStatementTemplateRepository.delete(entity);
+    }
+
+    @Override
+    public FinancialStatementAnnotationEntity saveAnnotation(FinancialStatementAnnotationEntity entity) {
+        return financialStatementAnnotationRepository.save(entity);
+    }
+
+    @Override
+    public Optional<FinancialStatementAnnotationEntity> findAnnotationByIdAndReportId(Long annotationId, UUID reportId) {
+        return financialStatementAnnotationRepository.findByIdAndFinancialStatement_ReportId(annotationId, reportId);
+    }
+
+    @Override
+    public List<FinancialStatementAnnotationEntity> findAnnotationsByReportId(UUID reportId) {
+        return financialStatementAnnotationRepository.findByFinancialStatement_ReportIdOrderByCreatedAtAsc(reportId);
+    }
+
+    @Override
+    public void deleteAnnotation(FinancialStatementAnnotationEntity entity) {
+        financialStatementAnnotationRepository.delete(entity);
     }
 
     @Override

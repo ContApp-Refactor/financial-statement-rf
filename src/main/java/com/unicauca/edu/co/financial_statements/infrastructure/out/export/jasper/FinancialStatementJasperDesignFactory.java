@@ -7,13 +7,17 @@ import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.design.JRDesignBand;
 import net.sf.jasperreports.engine.design.JRDesignExpression;
 import net.sf.jasperreports.engine.design.JRDesignField;
+import net.sf.jasperreports.engine.design.JRDesignImage;
+import net.sf.jasperreports.engine.design.JRDesignParameter;
 import net.sf.jasperreports.engine.design.JRDesignSection;
 import net.sf.jasperreports.engine.design.JRDesignStaticText;
 import net.sf.jasperreports.engine.design.JRDesignStyle;
 import net.sf.jasperreports.engine.design.JRDesignTextField;
 import net.sf.jasperreports.engine.design.JasperDesign;
+import net.sf.jasperreports.engine.JRStyle;
 import net.sf.jasperreports.engine.type.HorizontalTextAlignEnum;
 import net.sf.jasperreports.engine.type.ModeEnum;
+import net.sf.jasperreports.engine.type.ScaleImageEnum;
 import net.sf.jasperreports.engine.type.SplitTypeEnum;
 import net.sf.jasperreports.engine.type.VerticalTextAlignEnum;
 import net.sf.jasperreports.engine.xml.JRXmlLoader;
@@ -21,6 +25,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
 import java.awt.Color;
+import java.awt.Image;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -48,11 +53,46 @@ public class FinancialStatementJasperDesignFactory {
             addField(design, "column" + index);
         }
         addField(design, "rowType");
+        addParameter(design, "SIGNATURE_IMAGE", Image.class);
 
         float baseFontSize = styleResolver.resolveFontSize(exportStyle, 9f);
         String fontName = styleResolver.resolveFontName(exportStyle);
         Color headerColor = styleResolver.resolveHeaderColor(exportStyle);
         Color headerTextColor = styleResolver.resolveHeaderTextColor(headerColor);
+        HorizontalTextAlignEnum titleAlignment = styleResolver.resolveTitleAlignment(exportStyle);
+
+        applyBaseTemplateStyle(
+                design,
+                "EnterpriseTitle",
+                fontName,
+                Math.max(10f, baseFontSize + 1f),
+                titleAlignment,
+                headerColor
+        );
+        applyBaseTemplateStyle(
+                design,
+                "ReportTitle",
+                fontName,
+                Math.max(12f, baseFontSize + 2f),
+                titleAlignment,
+                headerColor
+        );
+        applyBaseTemplateStyle(
+                design,
+                "Metadata",
+                fontName,
+                Math.max(8f, baseFontSize - 1f),
+                titleAlignment,
+                Color.DARK_GRAY
+        );
+        applyBaseTemplateStyle(
+                design,
+                "Criteria",
+                fontName,
+                Math.max(8f, baseFontSize),
+                titleAlignment,
+                Color.DARK_GRAY
+        );
 
         JRDesignStyle headerStyle = createHeaderStyle(design, fontName, baseFontSize, headerColor, headerTextColor);
         JRDesignStyle textStyle = createTextStyle(design, "TableText", fontName, baseFontSize, HorizontalTextAlignEnum.LEFT);
@@ -60,6 +100,7 @@ public class FinancialStatementJasperDesignFactory {
 
         design.setColumnHeader(createColumnHeaderBand(model.columns(), headerStyle));
         ((JRDesignSection) design.getDetailSection()).addBand(createDetailBand(columnCount, textStyle, numericStyle));
+        design.setSummary(createSummaryBand(design, model.signatureImage(), textStyle));
 
         return design;
     }
@@ -220,6 +261,38 @@ public class FinancialStatementJasperDesignFactory {
         design.addField(field);
     }
 
+    private void addParameter(JasperDesign design, String name, Class<?> valueClass) throws JRException {
+        JRDesignParameter parameter = new JRDesignParameter();
+        parameter.setName(name);
+        parameter.setValueClass(valueClass);
+        design.addParameter(parameter);
+    }
+
+    private void applyBaseTemplateStyle(
+            JasperDesign design,
+            String styleName,
+            String fontName,
+            float fontSize,
+            HorizontalTextAlignEnum alignment,
+            Color textColor
+    ) {
+        JRStyle style = design.getStylesList().stream()
+                .filter(candidate -> styleName.equals(candidate.getName()))
+                .findFirst()
+                .orElse(null);
+
+        if (!(style instanceof JRDesignStyle designStyle)) {
+            return;
+        }
+
+        designStyle.setFontName(fontName);
+        designStyle.setFontSize(fontSize);
+        designStyle.setHorizontalTextAlign(alignment);
+        if (textColor != null) {
+            designStyle.setForecolor(textColor);
+        }
+    }
+
     private int[] resolveColumnWidths(int columnCount, int totalWidth) {
         if (columnCount <= 0) {
             return new int[]{totalWidth};
@@ -250,5 +323,41 @@ public class FinancialStatementJasperDesignFactory {
 
     private void applyThinBorder(JRDesignStaticText text) {
         text.getLineBox().getPen().setLineWidth(0.5f);
+    }
+
+    private JRDesignBand createSummaryBand(
+            JasperDesign design,
+            byte[] signatureImage,
+            JRDesignStyle textStyle
+    ) throws JRException {
+        JRDesignBand band = new JRDesignBand();
+        if (signatureImage == null || signatureImage.length == 0) {
+            band.setHeight(0);
+            return band;
+        }
+
+        band.setHeight(120);
+        band.setSplitType(SplitTypeEnum.STRETCH);
+
+        JRDesignStaticText label = new JRDesignStaticText();
+        label.setX(0);
+        label.setY(10);
+        label.setWidth(140);
+        label.setHeight(20);
+        label.setText("Firma");
+        label.setStyle(textStyle);
+        band.addElement(label);
+
+        JRDesignImage image = new JRDesignImage(design);
+        image.setX(0);
+        image.setY(35);
+        image.setWidth(180);
+        image.setHeight(70);
+        image.setUsingCache(false);
+        image.setScaleImage(ScaleImageEnum.RETAIN_SHAPE);
+        image.setExpression(expression("$P{SIGNATURE_IMAGE}"));
+        band.addElement(image);
+
+        return band;
     }
 }

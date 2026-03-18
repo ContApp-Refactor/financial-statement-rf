@@ -387,7 +387,7 @@ public class FinancialPositionStatementBuilder {
                 totalAssets,
                 previousTotalAssets,
                 accountingEntryOperations::signedAmountByNature,
-                true
+                false
         );
     }
 

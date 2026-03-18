@@ -7,6 +7,16 @@ import org.springframework.util.StringUtils;
 @Component
 public class FinancialPositionEntryClassifier {
 
+    private static final String[] TEMPORARY_FINANCIAL_ASSET_ACCOUNTS = {"1205", "1206", "1207", "1208"};
+    private static final String[] PAYABLE_NAME_FALLBACK_TOKENS = {"proveedor", "acreedor", "cuentas por pagar"};
+    private static final String[] FINANCIAL_NAME_FALLBACK_TOKENS = {
+            "obligaciones financieras",
+            "pasivos financieros",
+            "credito bancario",
+            "prestamo"
+    };
+    private static final String[] LONG_TERM_NAME_FALLBACK_TOKENS = {"largo plazo", "no corriente"};
+
     private final AccountingEntryOperations accountingEntryOperations;
 
     public FinancialPositionEntryClassifier(AccountingEntryOperations accountingEntryOperations) {
@@ -14,53 +24,57 @@ public class FinancialPositionEntryClassifier {
     }
 
     public boolean isCashAssetEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry) && codeStartsWith(entry, "11");
+        return isAssetClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "11");
     }
 
     public boolean isReceivableAssetEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry) && codeStartsWith(entry, "13") && !codeStartsWith(entry, "1355");
+        return isAssetClassEntry(entry)
+                && accountingEntryOperations.matchesGroup(entry, "13")
+                && !isCurrentTaxAssetEntry(entry);
     }
 
     public boolean isTemporaryFinancialAssetEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry) && nameContains(entry, "temporal");
+        return isAssetClassEntry(entry)
+                && (accountingEntryOperations.matchesAnyAccount(entry, TEMPORARY_FINANCIAL_ASSET_ACCOUNTS)
+                || (accountingEntryOperations.matchesGroup(entry, "12") && nameContainsAny(entry, "temporal", "corto plazo")));
     }
 
     public boolean isInventoryAssetEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry) && codeStartsWith(entry, "14") && !nameContains(entry, "biologic");
+        return isAssetClassEntry(entry)
+                && accountingEntryOperations.matchesGroup(entry, "14")
+                && !isBiologicalAssetEntry(entry);
     }
 
     public boolean isCurrentTaxAssetEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry)
-                && (codeStartsWith(entry, "1355") || nameContainsAllTokens(entry, "impuesto", "corriente"));
+        return isAssetClassEntry(entry) && accountingEntryOperations.matchesAccount(entry, "1355");
     }
 
     public boolean isBiologicalAssetEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry) && nameContains(entry, "biologic");
+        return isAssetClassEntry(entry) && accountingEntryOperations.matchesAccount(entry, "1465");
     }
 
     public boolean isHeldForSaleAssetEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry)
-                && (codeStartsWith(entry, "18") || nameContainsAllTokens(entry, "mantenidos", "venta"));
+        return isAssetClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "18");
     }
 
     public boolean isPropertyPlantEquipmentEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry) && codeStartsWith(entry, "15") && !nameContains(entry, "inversion");
+        return isAssetClassEntry(entry)
+                && accountingEntryOperations.matchesGroup(entry, "15")
+                && !isInvestmentPropertyEntry(entry);
     }
 
     public boolean isPermanentFinancialAssetEntry(AccountingEntry entry) {
         return isAssetClassEntry(entry)
-                && (nameContainsAllTokens(entry, "financier", "permanent")
-                || nameContainsAllTokens(entry, "inversion", "perman"));
+                && accountingEntryOperations.matchesGroup(entry, "12")
+                && !isTemporaryFinancialAssetEntry(entry);
     }
 
     public boolean isIntangibleAssetEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry) && (codeStartsWith(entry, "16") || nameContains(entry, "intangible"));
+        return isAssetClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "16");
     }
 
     public boolean isInvestmentPropertyEntry(AccountingEntry entry) {
-        return isAssetClassEntry(entry)
-                && (nameContains(entry, "propiedades de inversion")
-                || nameContainsAllTokens(entry, "propiedad", "inversion"));
+        return isAssetClassEntry(entry) && accountingEntryOperations.matchesAccount(entry, "1516");
     }
 
     public boolean isOtherAssetEntry(AccountingEntry entry) {
@@ -80,100 +94,107 @@ public class FinancialPositionEntryClassifier {
 
     public boolean isTradePayableEntry(AccountingEntry entry) {
         return isLiabilityClassEntry(entry)
-                && (nameContainsAny(entry, "proveedor", "acreedor", "cuentas por pagar")
-                || (codeStartsWith(entry, "22") && !isFinancialObligation(entry)));
+                && !isCurrentTaxLiabilityEntry(entry)
+                && !isProvisionLiabilityEntry(entry)
+                && !isDeferredTaxLiabilityEntry(entry)
+                && !isLongTermFinancialLiabilityEntry(entry)
+                && !isCurrentFinancialLiability(entry)
+                && (accountingEntryOperations.matchesGroup(entry, "22") || hasTradePayableNameFallback(entry));
     }
 
     public boolean isCurrentTaxLiabilityEntry(AccountingEntry entry) {
-        return isLiabilityClassEntry(entry)
-                && (codeStartsWith(entry, "24")
-                || nameContainsAllTokens(entry, "impuestos", "corrientes")
-                || nameContainsAllTokens(entry, "impuesto", "corriente"));
+        return isLiabilityClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "24");
     }
 
     public boolean isProvisionLiabilityEntry(AccountingEntry entry) {
-        return isLiabilityClassEntry(entry) && (codeStartsWith(entry, "26") || nameContains(entry, "provision"));
+        return isLiabilityClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "26");
     }
 
     public boolean isLongTermFinancialLiabilityEntry(AccountingEntry entry) {
         return isLiabilityClassEntry(entry)
-                && (codeStartsWith(entry, "23")
-                || (isFinancialObligation(entry)
-                && (nameContainsAllTokens(entry, "financier", "largo", "plazo")
-                || nameContains(entry, "no corriente"))));
+                && (accountingEntryOperations.matchesGroup(entry, "23")
+                || (accountingEntryOperations.matchesAnyGroup(entry, "21", "22")
+                && hasFinancialLiabilityNameFallback(entry)
+                && hasLongTermNameFallback(entry)));
     }
 
     public boolean isCapitalEntry(AccountingEntry entry) {
-        return isEquityClassEntry(entry) && codeStartsWith(entry, "31");
+        return isEquityClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "31");
     }
 
     public boolean isReserveEntry(AccountingEntry entry) {
-        return isEquityClassEntry(entry) && codeStartsWith(entry, "33");
+        return isEquityClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "33");
     }
 
     public boolean isRetainedEarningsEntry(AccountingEntry entry) {
-        return isEquityClassEntry(entry) && codeStartsWith(entry, "36");
+        return isEquityClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "36");
     }
 
     public boolean isDividendEntry(AccountingEntry entry) {
-        return isEquityClassEntry(entry)
-                && (codeStartsWith(entry, "37") || nameContainsAllTokens(entry, "dividendo", "decret"));
+        return isEquityClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "37");
     }
 
     public boolean isTreasuryShareEntry(AccountingEntry entry) {
-        return isEquityClassEntry(entry) && nameContainsAllTokens(entry, "acciones", "readquir");
+        return isEquityClassEntry(entry)
+                && (accountingEntryOperations.matchesSubAccount(entry, "320505")
+                || (accountingEntryOperations.matchesAccount(entry, "3205")
+                && nameContainsAllTokens(entry, "acciones", "readquir")));
     }
 
     public boolean isSharePremiumEntry(AccountingEntry entry) {
-        return isEquityClassEntry(entry) && nameContainsAllTokens(entry, "prima", "emision");
+        return isEquityClassEntry(entry)
+                && (accountingEntryOperations.matchesSubAccount(entry, "320510")
+                || (accountingEntryOperations.matchesAccount(entry, "3205")
+                && nameContainsAllTokens(entry, "prima", "emision")));
     }
 
     public boolean isDeferredTaxLiabilityEntry(AccountingEntry entry) {
-        return isLiabilityClassEntry(entry) && (codeStartsWith(entry, "27") || nameContains(entry, "diferid"));
+        return isLiabilityClassEntry(entry) && accountingEntryOperations.matchesGroup(entry, "27");
     }
 
     public boolean isCurrentFinancialLiability(AccountingEntry entry) {
-        if (!isLiabilityClassEntry(entry)) {
-            return false;
-        }
-
-        boolean financialName = isFinancialObligation(entry);
-        boolean currentLiabilityCode = codeStartsWith(entry, "21");
-        boolean longTermCode = codeStartsWith(entry, "23");
-        boolean longTermName = nameContainsAllTokens(entry, "largo", "plazo") || nameContains(entry, "no corriente");
-
-        return (financialName || currentLiabilityCode)
-                && !longTermCode
-                && !longTermName
-                && !nameContainsAny(entry, "proveedor", "acreedor", "cuentas por pagar");
+        return isLiabilityClassEntry(entry)
+                && !isCurrentTaxLiabilityEntry(entry)
+                && !isProvisionLiabilityEntry(entry)
+                && !isDeferredTaxLiabilityEntry(entry)
+                && !isLongTermFinancialLiabilityEntry(entry)
+                && !hasTradePayableNameFallback(entry)
+                && (accountingEntryOperations.matchesGroup(entry, "21")
+                || (accountingEntryOperations.matchesGroup(entry, "22")
+                && hasFinancialLiabilityNameFallback(entry)
+                && !hasLongTermNameFallback(entry)));
     }
 
     private boolean isAssetClassEntry(AccountingEntry entry) {
-        return codeStartsWith(entry, "1");
+        return accountingEntryOperations.matchesAccountingClass(entry, "1");
     }
 
     private boolean isLiabilityClassEntry(AccountingEntry entry) {
-        return codeStartsWith(entry, "2");
+        return accountingEntryOperations.matchesAccountingClass(entry, "2");
     }
 
     private boolean isEquityClassEntry(AccountingEntry entry) {
-        return codeStartsWith(entry, "3");
+        return accountingEntryOperations.matchesAccountingClass(entry, "3");
     }
 
-    private boolean codeStartsWith(AccountingEntry entry, String prefix) {
-        return accountingEntryOperations.codeStartsWith(entry, prefix);
+    private boolean hasTradePayableNameFallback(AccountingEntry entry) {
+        return nameContainsAny(entry, PAYABLE_NAME_FALLBACK_TOKENS);
     }
 
-    private boolean isFinancialObligation(AccountingEntry entry) {
-        return nameContainsAny(entry, "obligaciones financieras", "pasivos financieros", "credito bancario", "prestamo");
+    private boolean hasFinancialLiabilityNameFallback(AccountingEntry entry) {
+        return nameContainsAny(entry, FINANCIAL_NAME_FALLBACK_TOKENS);
+    }
+
+    private boolean hasLongTermNameFallback(AccountingEntry entry) {
+        return nameContainsAny(entry, LONG_TERM_NAME_FALLBACK_TOKENS);
     }
 
     private boolean nameContainsAny(AccountingEntry entry, String... tokens) {
-        if (entry == null || !StringUtils.hasText(entry.getAccountName()) || tokens == null || tokens.length == 0) {
+        String normalizedName = normalizeName(entry);
+        if (!StringUtils.hasText(normalizedName) || tokens == null || tokens.length == 0) {
             return false;
         }
 
-        String normalizedName = entry.getAccountName().toLowerCase();
         for (String token : tokens) {
             if (StringUtils.hasText(token) && normalizedName.contains(token.toLowerCase())) {
                 return true;
@@ -182,27 +203,24 @@ public class FinancialPositionEntryClassifier {
         return false;
     }
 
-    private boolean nameContains(AccountingEntry entry, String token) {
-        if (entry == null || !StringUtils.hasText(entry.getAccountName()) || !StringUtils.hasText(token)) {
-            return false;
-        }
-        return entry.getAccountName().toLowerCase().contains(token.toLowerCase());
-    }
-
     private boolean nameContainsAllTokens(AccountingEntry entry, String... tokens) {
-        if (entry == null || !StringUtils.hasText(entry.getAccountName()) || tokens == null || tokens.length == 0) {
+        String normalizedName = normalizeName(entry);
+        if (!StringUtils.hasText(normalizedName) || tokens == null || tokens.length == 0) {
             return false;
         }
 
-        String name = entry.getAccountName().toLowerCase();
         for (String token : tokens) {
-            if (!StringUtils.hasText(token)) {
-                continue;
-            }
-            if (!name.contains(token.toLowerCase())) {
+            if (StringUtils.hasText(token) && !normalizedName.contains(token.toLowerCase())) {
                 return false;
             }
         }
         return true;
+    }
+
+    private String normalizeName(AccountingEntry entry) {
+        if (entry == null || !StringUtils.hasText(entry.getAccountName())) {
+            return null;
+        }
+        return entry.getAccountName().toLowerCase();
     }
 }

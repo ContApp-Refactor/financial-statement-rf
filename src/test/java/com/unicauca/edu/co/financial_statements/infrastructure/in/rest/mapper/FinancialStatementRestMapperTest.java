@@ -1,12 +1,15 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.in.rest.mapper;
 
+import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementReportMetadataMapper;
 import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementRowMapper;
+import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementTemplateExportStyleMapper;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementGenerationResult;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementReport;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementRow;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EFinancialStatementType;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.ExportFinancialStatementRequest;
+import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.InfoReportTemplateRequest;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -20,7 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FinancialStatementRestMapperTest {
 
     private final FinancialStatementRestMapper mapper =
-            new FinancialStatementRestMapper(new FinancialStatementRowMapper());
+            new FinancialStatementRestMapper(
+                    new FinancialStatementRowMapper(),
+                    new FinancialStatementReportMetadataMapper(),
+                    new FinancialStatementTemplateExportStyleMapper()
+            );
 
     @Test
     void shouldConvertRequestRowsToTypedRows() {
@@ -79,5 +86,29 @@ class FinancialStatementRestMapperTest {
         assertThat(command.getFormat()).isEqualTo(EReportExportFormat.EXCEL);
         assertThat(command.getEnterpriseName()).isEqualTo("ENT-002");
         assertThat(command.getFinancialStatementData()).containsExactly(previewRow);
+    }
+
+    @Test
+    void shouldMapExportStyleUsingAlignmentFieldFromTemplateRequest() {
+        ExportFinancialStatementRequest request = ExportFinancialStatementRequest.builder()
+                .format("PDF")
+                .infoReportTemplate(InfoReportTemplateRequest.builder()
+                        .alignment("center")
+                        .font("Helvetica")
+                        .fontSize(12)
+                        .mainColor("#003366")
+                        .pathLogotype("https://contapp/logo.png")
+                        .build())
+                .build();
+
+        var command = mapper.toDomain(request);
+
+        assertThat(command).isNotNull();
+        assertThat(command.getExportStyle()).isNotNull();
+        assertThat(command.getExportStyle().getAlignment()).isEqualTo("CENTER");
+        assertThat(command.getExportStyle().getFont()).isEqualTo("Helvetica");
+        assertThat(command.getExportStyle().getFontSize()).isEqualTo(12);
+        assertThat(command.getExportStyle().getMainColor()).isEqualTo("#003366");
+        assertThat(command.getExportStyle().getPathLogotype()).isEqualTo("https://contapp/logo.png");
     }
 }

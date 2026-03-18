@@ -19,8 +19,10 @@ class FinancialPositionStatementBuilderTest {
     private final FinancialPositionEntryClassifier classifier = new FinancialPositionEntryClassifier(accountingEntryOperations);
     private final IncomeStatementAmountCalculator incomeStatementAmountCalculator =
             new IncomeStatementAmountCalculator(accountingEntryOperations);
+    private final PeriodResultCalculator periodResultCalculator =
+            new PeriodResultCalculator(accountingEntryOperations, incomeStatementAmountCalculator);
     private final FinancialPositionAmountCalculator amountCalculator =
-            new FinancialPositionAmountCalculator(classifier, accountingEntryOperations, incomeStatementAmountCalculator);
+            new FinancialPositionAmountCalculator(classifier, accountingEntryOperations, periodResultCalculator);
     private final FinancialPositionStatementBuilder builder =
             new FinancialPositionStatementBuilder(
                     amountCalculator,

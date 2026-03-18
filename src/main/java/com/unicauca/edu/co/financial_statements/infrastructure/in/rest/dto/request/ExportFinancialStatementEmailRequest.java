@@ -21,6 +21,8 @@ public class ExportFinancialStatementEmailRequest {
     private String entName;
     private Map<String, Object> financialStatement;
     private List<Map<String, Object>> financialStatementData;
+    private List<UpsertFinancialStatementAnnotationRequest> annotations;
+    private VisualSignatureRequest signature;
     private InfoReportTemplateRequest infoReportTemplate;
 
     @Email(message = "toEmail must be a valid email")
