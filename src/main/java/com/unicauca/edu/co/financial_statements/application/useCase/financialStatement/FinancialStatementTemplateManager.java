@@ -85,6 +85,45 @@ public class FinancialStatementTemplateManager {
                 .map(this::toTemplate);
     }
 
+    public void deleteTemplate(String enterpriseId, Long templateId) {
+        if (!StringUtils.hasText(enterpriseId)) {
+            throw new IllegalArgumentException("enterpriseId is required.");
+        }
+        if (templateId == null) {
+            throw new IllegalArgumentException("templateId is required.");
+        }
+
+        deleteTemplatesInternal(enterpriseId.trim(), List.of(templateId));
+    }
+
+    public int deleteTemplates(String enterpriseId, List<Long> templateIds) {
+        if (!StringUtils.hasText(enterpriseId)) {
+            throw new IllegalArgumentException("enterpriseId is required.");
+        }
+        if (templateIds == null || templateIds.isEmpty()) {
+            throw new IllegalArgumentException("templateIds are required.");
+        }
+
+        return deleteTemplatesInternal(enterpriseId.trim(), templateIds);
+    }
+
+    public int deleteAllTemplates(String enterpriseId) {
+        if (!StringUtils.hasText(enterpriseId)) {
+            throw new IllegalArgumentException("enterpriseId is required.");
+        }
+
+        List<Long> templateIds = financialStatementPersistencePort.findTemplatesByEnterprise(enterpriseId.trim()).stream()
+                .map(FinancialStatementTemplateEntity::getId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        if (templateIds.isEmpty()) {
+            return 0;
+        }
+
+        return deleteTemplatesInternal(enterpriseId.trim(), templateIds);
+    }
+
     private void validateTemplate(FinancialStatementTemplate template) {
         if (template == null) {
             throw new IllegalArgumentException("template is required.");
@@ -158,5 +197,53 @@ public class FinancialStatementTemplateManager {
                 .isDefault(entity.getIsDefault())
                 .createdAt(entity.getCreatedAt())
                 .build();
+    }
+
+    private int deleteTemplatesInternal(String enterpriseId, List<Long> templateIds) {
+        List<Long> normalizedIds = templateIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (normalizedIds.isEmpty()) {
+            throw new IllegalArgumentException("templateIds are required.");
+        }
+
+        List<FinancialStatementTemplateEntity> templates = normalizedIds.stream()
+                .map(templateId -> financialStatementPersistencePort.findTemplateByIdAndEnterprise(templateId, enterpriseId)
+                        .orElseThrow(() -> new IllegalArgumentException("Financial statement template not found.")))
+                .toList();
+
+        boolean deletedDefault = templates.stream().anyMatch(template -> Boolean.TRUE.equals(template.getIsDefault()));
+        templates.forEach(financialStatementPersistencePort::deleteTemplate);
+
+        if (deletedDefault) {
+            assignDefaultIfNeeded(enterpriseId);
+        }
+
+        return templates.size();
+    }
+
+    private void assignDefaultIfNeeded(String enterpriseId) {
+        List<FinancialStatementTemplateEntity> remainingTemplates = financialStatementPersistencePort
+                .findTemplatesByEnterprise(enterpriseId);
+
+        if (remainingTemplates.isEmpty()) {
+            return;
+        }
+
+        boolean hasDefault = remainingTemplates.stream().anyMatch(template -> Boolean.TRUE.equals(template.getIsDefault()));
+        if (hasDefault) {
+            return;
+        }
+
+        FinancialStatementTemplateEntity fallbackTemplate = remainingTemplates.stream()
+                .findFirst()
+                .orElse(null);
+
+        if (fallbackTemplate != null) {
+            fallbackTemplate.setIsDefault(Boolean.TRUE);
+            financialStatementPersistencePort.saveTemplate(fallbackTemplate);
+        }
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -56,6 +57,12 @@ public class AccountInfoClient implements IAccountingInfoClient {
                 .setReadTimeout(Duration.ofSeconds(20))
                 .build();
         this.properties = properties;
+        log.debug(
+                "AccountInfoClient initialized. baseUrl={}, mockModeEnabled={}, acceptLegacyDateFormat={}",
+                properties.getBaseUrl(),
+                properties.isMockModeEnabled(),
+                properties.isAcceptLegacyDateFormat()
+        );
     }
 
     @Override
@@ -63,6 +70,15 @@ public class AccountInfoClient implements IAccountingInfoClient {
         if (!StringUtils.hasText(properties.getBaseUrl())) {
             throw new IllegalStateException("The accounting information service URL is not configured.");
         }
+
+        log.debug(
+                "Requesting accounting entries. entId={}, startDate={}, endDate={}, baseUrl={}, mockMode={}",
+                entId,
+                startDate,
+                endDate,
+                properties.getBaseUrl(),
+                properties.isMockModeEnabled()
+        );
 
         URI filteredRequestUri = buildFilteredRequestUri(entId, startDate, endDate);
         URI fallbackRequestUri = UriComponentsBuilder.fromUriString(properties.getBaseUrl())
@@ -130,6 +146,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
     }
 
     private AccountInfoMovementResponse[] requestEntries(URI requestUri) {
+        log.debug("Calling account-info service: {}", requestUri);
         ResponseEntity<AccountInfoMovementResponse[]> response = restTemplate.exchange(
                 requestUri,
                 HttpMethod.GET,
@@ -245,6 +262,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
 
     private HttpHeaders buildHeaders() {
         HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         String bearerToken = resolveBearerToken();
 
         if (StringUtils.hasText(bearerToken)) {

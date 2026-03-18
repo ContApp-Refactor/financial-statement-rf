@@ -12,9 +12,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EquityChangesAmountCalculatorTest {
 
+    private final AccountingEntryOperations accountingEntryOperations = new AccountingEntryOperations();
+    private final IncomeStatementAmountCalculator incomeStatementAmountCalculator =
+            new IncomeStatementAmountCalculator(accountingEntryOperations);
+    private final FinancialPositionEntryClassifier financialPositionEntryClassifier =
+            new FinancialPositionEntryClassifier(accountingEntryOperations);
+    private final PeriodResultCalculator periodResultCalculator =
+            new PeriodResultCalculator(accountingEntryOperations, incomeStatementAmountCalculator);
     private final EquityChangesAmountCalculator calculator = new EquityChangesAmountCalculator(
-            new AccountingEntryOperations(),
-            new IncomeStatementAmountCalculator(new AccountingEntryOperations())
+            accountingEntryOperations,
+            financialPositionEntryClassifier,
+            periodResultCalculator
     );
 
     @Test
@@ -123,6 +131,31 @@ class EquityChangesAmountCalculatorTest {
         assertThat(amounts.totalEquityByYear())
                 .containsEntry(2024, new BigDecimal("175000000.00"))
                 .containsEntry(2025, new BigDecimal("376000000.00"));
+    }
+
+    @Test
+    void shouldClassifyEquityComponentsByCodeEvenWhenAccountNamesChange() {
+        List<AccountingEntry> sourceEntries = List.of(
+                creditEntry("2025-01-10", "310505", "Aportes ordinarios", "100"),
+                creditEntry("2025-01-11", "320510", "Superavit patrimonial", "20"),
+                creditEntry("2025-01-12", "330505", "Reserva interna", "10"),
+                creditEntry("2025-01-13", "360505", "Saldo retenido", "15"),
+                debitEntry("2025-01-14", "320505", "Cuenta de control patrimonial", "3"),
+                debitEntry("2025-01-15", "370505", "Distribucion aprobada", "5")
+        );
+
+        EquityChangesAmounts amounts = calculator.calculate(
+                sourceEntries,
+                sourceEntries,
+                List.of(),
+                LocalDate.of(2025, 3, 31),
+                LocalDate.of(2024, 3, 31)
+        );
+
+        assertThat(amounts.capitalEmitido().current()).isEqualByComparingTo("120.00");
+        assertThat(amounts.otrasReservas().current()).isEqualByComparingTo("10.00");
+        assertThat(amounts.gananciasAcumuladas().current()).isEqualByComparingTo("7.00");
+        assertThat(amounts.totalPatrimonio().current()).isEqualByComparingTo("137.00");
     }
 
     private AccountingEntry debitEntry(String date, String code, String name, String debit) {

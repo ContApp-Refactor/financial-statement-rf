@@ -1,7 +1,9 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.in.rest.mapper;
 
+import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementSignatureException;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementCriteria;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementCriteriaRange;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementAnnotation;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementEmailSchedule;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementEmailExportCommand;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportCommand;
@@ -10,7 +12,10 @@ import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStat
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementRequest;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementReport;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementTemplate;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementVisualSignature;
+import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementReportMetadataMapper;
 import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementRowMapper;
+import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementTemplateExportStyleMapper;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.CreateFinancialStatementEmailScheduleRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.ExportFinancialStatementEmailRequest;
@@ -19,13 +24,21 @@ import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.reque
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.FinancialStatementCriteriaRangeRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.GenerateFinancialStatementRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.InfoReportTemplateRequest;
+import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.UpsertFinancialStatementAnnotationRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.UpsertFinancialStatementTemplateRequest;
+import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.VisualSignatureRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Base64;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -33,6 +46,8 @@ import java.util.Map;
 public class FinancialStatementRestMapper {
 
     private final FinancialStatementRowMapper financialStatementRowMapper;
+    private final FinancialStatementReportMetadataMapper financialStatementReportMetadataMapper;
+    private final FinancialStatementTemplateExportStyleMapper financialStatementTemplateExportStyleMapper;
 
     public FinancialStatementRequest toDomain(GenerateFinancialStatementRequest request) {
         if (request == null) {
@@ -91,6 +106,8 @@ public class FinancialStatementRestMapper {
                 .enterpriseName(request.getEntName())
                 .financialStatement(request.getFinancialStatement())
                 .financialStatementData(financialStatementRowMapper.toTypedRows(request.getFinancialStatementData()))
+                .annotations(toAnnotations(request.getAnnotations()))
+                .visualSignature(toVisualSignature(request.getSignature()))
                 .exportStyle(toExportStyle(request.getInfoReportTemplate()))
                 .build();
     }
@@ -106,6 +123,8 @@ public class FinancialStatementRestMapper {
                 .enterpriseName(request.getEntName())
                 .financialStatement(request.getFinancialStatement())
                 .financialStatementData(financialStatementRowMapper.toTypedRows(request.getFinancialStatementData()))
+                .annotations(toAnnotations(request.getAnnotations()))
+                .visualSignature(toVisualSignature(request.getSignature()))
                 .exportStyle(toExportStyle(request.getInfoReportTemplate()))
                 .toEmail(request.getToEmail())
                 .build();
@@ -120,14 +139,7 @@ public class FinancialStatementRestMapper {
         }
 
         FinancialStatementReport report = preview.getFinancialStatement();
-        Map<String, Object> financialStatement = new LinkedHashMap<>();
-        if (report != null) {
-            financialStatement.put("reportId", report.getReportId());
-            financialStatement.put("type", report.getType() != null ? report.getType().name() : null);
-            financialStatement.put("entId", report.getEntId());
-            financialStatement.put("criteria", report.getCriteria());
-            financialStatement.put("createdAt", report.getCreatedAt());
-        }
+        Map<String, Object> financialStatement = financialStatementReportMetadataMapper.toMetadataMap(report);
 
         return FinancialStatementExportCommand.builder()
                 .reportId(report != null ? report.getReportId() : null)
@@ -135,6 +147,7 @@ public class FinancialStatementRestMapper {
                 .enterpriseName(report != null ? report.getEntId() : null)
                 .financialStatement(financialStatement)
                 .financialStatementData(preview.getFinancialStatementData())
+                .annotations(preview.getAnnotations())
                 .build();
     }
 
@@ -186,7 +199,7 @@ public class FinancialStatementRestMapper {
 
         return FinancialStatementExportStyle.builder()
                 .pathLogotype(infoTemplate.getPathLogotype())
-                .alignment(infoTemplate.getAlienation())
+                .alignment(normalizeAlignment(infoTemplate.getAlignment()))
                 .font(infoTemplate.getFont())
                 .fontSize(infoTemplate.getFontSize())
                 .mainColor(infoTemplate.getMainColor())
@@ -194,16 +207,17 @@ public class FinancialStatementRestMapper {
     }
 
     public FinancialStatementExportStyle toExportStyle(FinancialStatementTemplate template) {
-        if (template == null) {
+        FinancialStatementExportStyle exportStyle = financialStatementTemplateExportStyleMapper.toExportStyle(template);
+        if (exportStyle == null) {
             return null;
         }
 
         return FinancialStatementExportStyle.builder()
-                .pathLogotype(template.getPathLogotype())
-                .alignment(normalizeAlignment(template.getAlignment()))
-                .font(template.getFont())
-                .fontSize(template.getFontSize())
-                .mainColor(template.getMainColor())
+                .pathLogotype(exportStyle.getPathLogotype())
+                .alignment(normalizeAlignment(exportStyle.getAlignment()))
+                .font(exportStyle.getFont())
+                .fontSize(exportStyle.getFontSize())
+                .mainColor(exportStyle.getMainColor())
                 .build();
     }
 
@@ -280,5 +294,72 @@ public class FinancialStatementRestMapper {
 
     private LocalDate firstNonNull(LocalDate firstValue, LocalDate secondValue) {
         return firstValue != null ? firstValue : secondValue;
+    }
+
+    private List<FinancialStatementAnnotation> toAnnotations(List<UpsertFinancialStatementAnnotationRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            return List.of();
+        }
+
+        return requests.stream()
+                .filter(request -> request != null && StringUtils.hasText(request.getText()))
+                .map(request -> FinancialStatementAnnotation.builder()
+                        .text(request.getText().trim())
+                        .build())
+                .toList();
+    }
+
+    private FinancialStatementVisualSignature toVisualSignature(VisualSignatureRequest request) {
+        if (request == null) {
+            return null;
+        }
+
+        if (!StringUtils.hasText(request.getBase64Content())
+                || !StringUtils.hasText(request.getContentType())
+                || !isSupportedSignatureContentType(request.getContentType())) {
+            throw new IllegalArgumentException("Debe seleccionar un archivo de firma válido");
+        }
+
+        try {
+            return FinancialStatementVisualSignature.builder()
+                    .fileName(request.getFileName())
+                    .contentType("image/png")
+                    .content(normalizeSignatureContent(request.getBase64Content().trim()))
+                    .build();
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        }
+    }
+
+    private boolean isSupportedSignatureContentType(String contentType) {
+        String normalized = contentType != null ? contentType.trim().toLowerCase() : null;
+        return "image/png".equals(normalized)
+                || "image/jpg".equals(normalized)
+                || "image/jpeg".equals(normalized);
+    }
+
+    private byte[] normalizeSignatureContent(String base64Content) {
+        byte[] decodedContent;
+        try {
+            decodedContent = Base64.getDecoder().decode(base64Content);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Debe seleccionar un archivo de firma válido", exception);
+        }
+
+        try (
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(decodedContent);
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
+        ) {
+            BufferedImage image = ImageIO.read(inputStream);
+            if (image == null || !ImageIO.write(image, "png", outputStream)) {
+                throw new IllegalArgumentException("Debe seleccionar un archivo de firma válido");
+            }
+            return outputStream.toByteArray();
+        } catch (IOException exception) {
+            throw new FinancialStatementSignatureException(
+                    "Error al aplicar la firma. Puede intentar de nuevo o exportar sin firma",
+                    exception
+            );
+        }
     }
 }

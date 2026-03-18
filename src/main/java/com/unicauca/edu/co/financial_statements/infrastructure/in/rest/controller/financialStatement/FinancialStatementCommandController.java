@@ -1,5 +1,6 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.in.rest.controller.financialStatement;
 
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementAnnotation;
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementCommandPort;
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementDeliveryPort;
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementEmailSchedulePort;
@@ -12,10 +13,12 @@ import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStat
 import com.unicauca.edu.co.financial_statements.domain.models.core.PageResult;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.ResponseDTO;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.CreateFinancialStatementEmailScheduleRequest;
+import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.DeleteFinancialStatementTemplatesRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.ExportFinancialStatementEmailRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.ExportFinancialStatementRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.GenerateFinancialStatementRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.UpdateFinancialStatementEmailScheduleStatusRequest;
+import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.UpsertFinancialStatementAnnotationRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.UpsertFinancialStatementTemplateRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.mapper.FinancialStatementRestMapper;
 import jakarta.validation.Valid;
@@ -23,16 +26,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -216,6 +222,55 @@ public class FinancialStatementCommandController {
                 .of();
     }
 
+    @DeleteMapping("/templates/{templateId}")
+    public ResponseEntity<ResponseDTO<Integer>> deleteTemplate(
+            @PathVariable Long templateId,
+            @RequestParam String enterpriseId
+    ) {
+        financialStatementCommandPort.deleteTemplate(enterpriseId, templateId);
+
+        return ResponseDTO.<Integer>builder()
+                .data(1)
+                .statusCode(HttpStatus.OK.value())
+                .code(HttpStatus.OK.value())
+                .message("Financial statement template deleted successfully")
+                .build()
+                .of();
+    }
+
+    @PostMapping("/templates/delete-batch")
+    public ResponseEntity<ResponseDTO<Integer>> deleteTemplates(
+            @Valid @RequestBody DeleteFinancialStatementTemplatesRequest request
+    ) {
+        int deletedCount = financialStatementCommandPort.deleteTemplates(
+                request.getEnterpriseId(),
+                request.getTemplateIds()
+        );
+
+        return ResponseDTO.<Integer>builder()
+                .data(deletedCount)
+                .statusCode(HttpStatus.OK.value())
+                .code(HttpStatus.OK.value())
+                .message("Financial statement templates deleted successfully")
+                .build()
+                .of();
+    }
+
+    @DeleteMapping("/templates")
+    public ResponseEntity<ResponseDTO<Integer>> deleteAllTemplates(
+            @RequestParam String enterpriseId
+    ) {
+        int deletedCount = financialStatementCommandPort.deleteAllTemplates(enterpriseId);
+
+        return ResponseDTO.<Integer>builder()
+                .data(deletedCount)
+                .statusCode(HttpStatus.OK.value())
+                .code(HttpStatus.OK.value())
+                .message("Financial statement templates deleted successfully")
+                .build()
+                .of();
+    }
+
     @PostMapping("/export/email")
     public ResponseEntity<ResponseDTO<Void>> exportFinancialStatementByEmail(
             @Valid @RequestBody ExportFinancialStatementEmailRequest request
@@ -258,6 +313,71 @@ public class FinancialStatementCommandController {
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
                 .message("Financial statement email schedules found")
+                .build()
+                .of();
+    }
+
+    @GetMapping("/{reportId}/annotations")
+    public ResponseEntity<ResponseDTO<List<FinancialStatementAnnotation>>> getAnnotations(
+            @PathVariable UUID reportId
+    ) {
+        List<FinancialStatementAnnotation> annotations = financialStatementCommandPort.getAnnotations(reportId);
+
+        return ResponseDTO.<List<FinancialStatementAnnotation>>builder()
+                .data(annotations)
+                .statusCode(HttpStatus.OK.value())
+                .code(HttpStatus.OK.value())
+                .message("Financial statement annotations found")
+                .build()
+                .of();
+    }
+
+    @PostMapping("/{reportId}/annotations")
+    public ResponseEntity<ResponseDTO<FinancialStatementAnnotation>> createAnnotation(
+            @PathVariable UUID reportId,
+            @Valid @RequestBody UpsertFinancialStatementAnnotationRequest request
+    ) {
+        FinancialStatementAnnotation annotation = financialStatementCommandPort
+                .createAnnotation(reportId, request.getText());
+
+        return ResponseDTO.<FinancialStatementAnnotation>builder()
+                .data(annotation)
+                .statusCode(HttpStatus.OK.value())
+                .code(HttpStatus.OK.value())
+                .message("Financial statement annotation saved successfully")
+                .build()
+                .of();
+    }
+
+    @PutMapping("/{reportId}/annotations/{annotationId}")
+    public ResponseEntity<ResponseDTO<FinancialStatementAnnotation>> updateAnnotation(
+            @PathVariable UUID reportId,
+            @PathVariable Long annotationId,
+            @Valid @RequestBody UpsertFinancialStatementAnnotationRequest request
+    ) {
+        FinancialStatementAnnotation annotation = financialStatementCommandPort
+                .updateAnnotation(reportId, annotationId, request.getText());
+
+        return ResponseDTO.<FinancialStatementAnnotation>builder()
+                .data(annotation)
+                .statusCode(HttpStatus.OK.value())
+                .code(HttpStatus.OK.value())
+                .message("Financial statement annotation updated successfully")
+                .build()
+                .of();
+    }
+
+    @DeleteMapping("/{reportId}/annotations/{annotationId}")
+    public ResponseEntity<ResponseDTO<Void>> deleteAnnotation(
+            @PathVariable UUID reportId,
+            @PathVariable Long annotationId
+    ) {
+        financialStatementCommandPort.deleteAnnotation(reportId, annotationId);
+
+        return ResponseDTO.<Void>builder()
+                .statusCode(HttpStatus.OK.value())
+                .code(HttpStatus.OK.value())
+                .message("Financial statement annotation deleted successfully")
                 .build()
                 .of();
     }

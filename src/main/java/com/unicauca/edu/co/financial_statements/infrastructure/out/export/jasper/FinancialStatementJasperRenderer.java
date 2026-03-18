@@ -1,5 +1,6 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.out.export.jasper;
 
+import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementSignatureException;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.export.FinancialStatementDocumentRenderer;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.export.FinancialStatementExportService;
@@ -20,6 +21,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -54,7 +57,13 @@ public class FinancialStatementJasperRenderer implements FinancialStatementDocum
                 case PDF -> exportPdf(model.reportName(), print);
                 case EXCEL -> exportExcel(model.reportName(), print);
             };
-        } catch (JRException exception) {
+        } catch (JRException | IOException exception) {
+            if (model.signatureImage() != null && model.signatureImage().length > 0) {
+                throw new FinancialStatementSignatureException(
+                        "Error al aplicar la firma. Puede intentar de nuevo o exportar sin firma",
+                        exception
+                );
+            }
             throw new IllegalStateException("Unable to export financial statement file with JasperReports.", exception);
         }
     }
@@ -62,14 +71,27 @@ public class FinancialStatementJasperRenderer implements FinancialStatementDocum
     private Map<String, Object> buildParameters(
             FinancialStatementTableModel model,
             FinancialStatementExportService.ExportStyle exportStyle
-    ) {
+    ) throws IOException {
         Map<String, Object> parameters = new LinkedHashMap<>();
         parameters.put("REPORT_NAME", model.reportName());
         parameters.put("ENTERPRISE_NAME", model.enterpriseName());
         parameters.put("GENERATED_AT", "Generado: " + model.generatedAt());
         parameters.put("CRITERIA_TEXT", model.criteriaText());
         parameters.put("LOGO_PATH", styleResolver.resolveLogoPath(exportStyle));
+        parameters.put("SIGNATURE_IMAGE", toSignatureImage(model.signatureImage()));
         return parameters;
+    }
+
+    private BufferedImage toSignatureImage(byte[] signatureImage) throws IOException {
+        if (signatureImage == null || signatureImage.length == 0) {
+            return null;
+        }
+
+        BufferedImage image = ImageIO.read(new java.io.ByteArrayInputStream(signatureImage));
+        if (image == null) {
+            throw new IOException("Unable to decode visual signature image.");
+        }
+        return image;
     }
 
     private FinancialStatementExportService.ExportedFile exportPdf(

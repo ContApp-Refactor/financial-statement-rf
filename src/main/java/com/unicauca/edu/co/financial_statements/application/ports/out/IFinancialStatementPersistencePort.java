@@ -1,6 +1,7 @@
 package com.unicauca.edu.co.financial_statements.application.ports.out;
 
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementEmailScheduleEntity;
+import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementAnnotationEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementHistoryEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementLogEntity;
@@ -36,6 +37,16 @@ public interface IFinancialStatementPersistencePort {
     long countTemplatesByEnterprise(String entId);
 
     Optional<FinancialStatementTemplateEntity> findDefaultTemplateByEnterprise(String entId);
+
+    void deleteTemplate(FinancialStatementTemplateEntity entity);
+
+    FinancialStatementAnnotationEntity saveAnnotation(FinancialStatementAnnotationEntity entity);
+
+    Optional<FinancialStatementAnnotationEntity> findAnnotationByIdAndReportId(Long annotationId, UUID reportId);
+
+    List<FinancialStatementAnnotationEntity> findAnnotationsByReportId(UUID reportId);
+
+    void deleteAnnotation(FinancialStatementAnnotationEntity entity);
 
     FinancialStatementEmailScheduleEntity saveEmailSchedule(FinancialStatementEmailScheduleEntity entity);
 

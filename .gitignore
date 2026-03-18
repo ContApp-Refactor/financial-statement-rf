@@ -37,3 +37,4 @@ tmp_monografia*
 mock/*.out.log
 mock/*.err.log
 docs/*.log
+src/main/resources/application-local.yml

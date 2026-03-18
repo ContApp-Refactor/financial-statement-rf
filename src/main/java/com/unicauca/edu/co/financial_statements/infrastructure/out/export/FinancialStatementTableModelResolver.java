@@ -12,6 +12,8 @@ public interface FinancialStatementTableModelResolver {
             String enterpriseName,
             List<Map<String, Object>> rawRows,
             List<FinancialStatementRow> typedRows,
-            Map<String, Object> financialStatement
+            Map<String, Object> financialStatement,
+            List<String> annotationTexts,
+            byte[] signatureImage
     );
 }

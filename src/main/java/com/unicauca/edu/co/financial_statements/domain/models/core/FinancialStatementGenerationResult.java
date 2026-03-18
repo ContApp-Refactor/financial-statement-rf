@@ -15,6 +15,7 @@ import java.util.List;
 public class FinancialStatementGenerationResult {
     private FinancialStatementReport financialStatement;
     private List<FinancialStatementRow> financialStatementData;
+    private List<FinancialStatementAnnotation> annotations;
     private BigDecimal totalAssets;
     private BigDecimal totalLiabilities;
     private BigDecimal totalEquity;

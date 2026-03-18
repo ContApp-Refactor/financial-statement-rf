@@ -56,7 +56,7 @@ mail:
 
 services:
   account-info-service:
-    base-url: https://6880fc27f1dcae717b643a8e.mockapi.io/api/accountInfo/accountInfo
+    base-url: https://bef02d1f-e3aa-47bc-a9e9-ab242f8696d0.mock.pstmn.io/accountInfo
     bearer-token: ${ACCOUNT_INFO_SERVICE_BEARER_TOKEN:}
     mock-mode-enabled: ${ACCOUNT_INFO_SERVICE_MOCK_MODE_ENABLED:false}
     accept-legacy-date-format: ${ACCOUNT_INFO_SERVICE_ACCEPT_LEGACY_DATE_FORMAT:false}

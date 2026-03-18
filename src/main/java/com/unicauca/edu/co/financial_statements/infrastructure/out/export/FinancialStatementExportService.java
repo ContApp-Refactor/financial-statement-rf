@@ -1,6 +1,7 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.out.export;
 
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementRow;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementVisualSignature;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -38,6 +39,19 @@ public class FinancialStatementExportService {
             Map<String, Object> financialStatement,
             ExportStyle exportStyle
     ) {
+        return export(format, reportName, enterpriseName, rows, financialStatement, exportStyle, List.of(), null);
+    }
+
+    public ExportedFile export(
+            EReportExportFormat format,
+            String reportName,
+            String enterpriseName,
+            List<Map<String, Object>> rows,
+            Map<String, Object> financialStatement,
+            ExportStyle exportStyle,
+            List<String> annotationTexts,
+            FinancialStatementVisualSignature visualSignature
+    ) {
         EReportExportFormat safeFormat = format != null ? format : EReportExportFormat.PDF;
         String safeReportName = StringUtils.hasText(reportName) ? reportName.trim() : DEFAULT_TITLE;
         String safeEnterprise = StringUtils.hasText(enterpriseName) ? enterpriseName.trim() : DEFAULT_ENTERPRISE;
@@ -45,13 +59,17 @@ public class FinancialStatementExportService {
         List<FinancialStatementRow> typedRows = financialStatementExportRowMapper.toRows(safeRows);
         Map<String, Object> safeFinancialStatement = financialStatement != null ? financialStatement : Map.of();
         ExportStyle safeExportStyle = exportStyle != null ? exportStyle : new ExportStyle(null, null, null, null, null);
+        List<String> safeAnnotationTexts = annotationTexts != null ? annotationTexts : List.of();
+        byte[] signatureImage = visualSignature != null ? visualSignature.getContent() : null;
 
         FinancialStatementTableModel model = financialStatementTableModelResolver.resolve(
                 safeReportName,
                 safeEnterprise,
                 safeRows,
                 typedRows,
-                safeFinancialStatement
+                safeFinancialStatement,
+                safeAnnotationTexts,
+                signatureImage
         );
 
         return financialStatementDocumentRenderer.export(

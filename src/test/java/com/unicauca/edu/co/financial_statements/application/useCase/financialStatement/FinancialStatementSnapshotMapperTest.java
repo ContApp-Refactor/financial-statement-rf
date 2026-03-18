@@ -23,7 +23,8 @@ class FinancialStatementSnapshotMapperTest {
     private final FinancialStatementSnapshotMapper mapper =
             new FinancialStatementSnapshotMapper(
                     new ObjectMapper().findAndRegisterModules(),
-                    new FinancialStatementRowMapper()
+                    new FinancialStatementRowMapper(),
+                    new FinancialStatementReportMetadataMapper()
             );
 
     @Test

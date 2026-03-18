@@ -2,6 +2,7 @@ package com.unicauca.edu.co.financial_statements.application.ports.in.financialS
 
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementHistoryItem;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementLog;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementAnnotation;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementGenerationResult;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementReport;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementRequest;
@@ -33,6 +34,20 @@ public interface IFinancialStatementCommandPort {
     List<FinancialStatementTemplate> getTemplatesByEnterprise(String enterpriseId);
 
     Optional<FinancialStatementTemplate> getDefaultTemplateByEnterprise(String enterpriseId);
+
+    void deleteTemplate(String enterpriseId, Long templateId);
+
+    int deleteTemplates(String enterpriseId, List<Long> templateIds);
+
+    int deleteAllTemplates(String enterpriseId);
+
+    List<FinancialStatementAnnotation> getAnnotations(UUID reportId);
+
+    FinancialStatementAnnotation createAnnotation(UUID reportId, String text);
+
+    FinancialStatementAnnotation updateAnnotation(UUID reportId, Long annotationId, String text);
+
+    void deleteAnnotation(UUID reportId, Long annotationId);
 
     void registerDeliveryEvent(UUID reportId, String deliveryWay, String message, String eventType);
 
