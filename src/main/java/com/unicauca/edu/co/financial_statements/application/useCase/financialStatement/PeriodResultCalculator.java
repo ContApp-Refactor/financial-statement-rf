@@ -35,8 +35,9 @@ public class PeriodResultCalculator {
             return scaleAmount(BigDecimal.ZERO);
         }
 
-        if (hasIncomeStatementMovementsInCurrentYear(entriesUpToCutoff, cutoffDate)) {
-            return incomeStatementAmountCalculator.calculateNetIncomeForCutoff(entriesUpToCutoff, cutoffDate);
+        LocalDate latestIncomeStatementCutoff = resolveLatestIncomeStatementCutoff(entriesUpToCutoff, cutoffDate);
+        if (latestIncomeStatementCutoff != null) {
+            return incomeStatementAmountCalculator.calculateNetIncomeForCutoff(entriesUpToCutoff, latestIncomeStatementCutoff);
         }
 
         BigDecimal closedPeriodResult = entriesUpToCutoff.stream()
@@ -47,13 +48,14 @@ public class PeriodResultCalculator {
         return scaleAmount(closedPeriodResult);
     }
 
-    private boolean hasIncomeStatementMovementsInCurrentYear(List<AccountingEntry> entries, LocalDate cutoffDate) {
-        LocalDate periodStart = cutoffDate.withDayOfYear(1);
-
+    private LocalDate resolveLatestIncomeStatementCutoff(List<AccountingEntry> entries, LocalDate cutoffDate) {
         return entries.stream()
                 .filter(entry -> entry != null && entry.getDate() != null)
-                .filter(entry -> !entry.getDate().isBefore(periodStart) && !entry.getDate().isAfter(cutoffDate))
-                .anyMatch(accountingEntryOperations::isIncomeStatementAccount);
+                .filter(entry -> !entry.getDate().isAfter(cutoffDate))
+                .filter(accountingEntryOperations::isIncomeStatementAccount)
+                .map(AccountingEntry::getDate)
+                .max(LocalDate::compareTo)
+                .orElse(null);
     }
 
     private BigDecimal scaleAmount(BigDecimal amount) {

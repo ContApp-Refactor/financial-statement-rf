@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 // Comment
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableScheduling
 public class FinancialStatementsApplication {
 
     public static void main(String[] args) {

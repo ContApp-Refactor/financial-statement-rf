@@ -3,10 +3,8 @@ package com.unicauca.edu.co.financial_statements.application.useCase.financialSt
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementCommandPort;
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementDeliveryPort;
 import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementExportPort;
-import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementMailPort;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementAnnotation;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementDocument;
-import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementEmailExportCommand;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportCommand;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementGenerationResult;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementRow;
@@ -31,7 +29,6 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
 
     private final IFinancialStatementCommandPort financialStatementCommandPort;
     private final IFinancialStatementExportPort financialStatementExportPort;
-    private final IFinancialStatementMailPort financialStatementMailPort;
     private final FinancialStatementReportNameResolver reportNameResolver;
     private final FinancialStatementRowMapper financialStatementRowMapper;
     private final FinancialStatementReportMetadataMapper financialStatementReportMetadataMapper;
@@ -50,7 +47,7 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 safeCommand.getFinancialStatement(),
                 safeCommand.getExportStyle(),
                 safeCommand.getAnnotations(),
-                safeCommand.getVisualSignature()
+                safeCommand.getVisualSignatures()
         );
 
         IFinancialStatementExportPort.ExportedDocument exportedDocument = financialStatementExportPort.export(
@@ -61,7 +58,7 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 context.financialStatement(),
                 context.exportStyle(),
                 toAnnotationTexts(context.annotations()),
-                context.visualSignature()
+                context.visualSignatures()
         );
 
         if (safeCommand.getReportId() != null) {
@@ -77,63 +74,16 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
     }
 
     @Override
-    public void exportByEmail(FinancialStatementEmailExportCommand command) throws Exception {
-        if (command == null || !StringUtils.hasText(command.getToEmail())) {
-            throw new IllegalArgumentException("toEmail is required.");
-        }
-
-        ExportContext context = resolveExportContext(
-                command.getReportId(),
-                command.getEnterpriseName(),
-                command.getFinancialStatementData(),
-                command.getFinancialStatement(),
-                command.getExportStyle(),
-                command.getAnnotations(),
-                command.getVisualSignature()
-        );
-
-        IFinancialStatementExportPort.ExportedDocument exportedDocument = financialStatementExportPort.export(
-                command.getFormat() != null ? command.getFormat() : EReportExportFormat.PDF,
-                context.reportName(),
-                context.enterpriseName(),
-                financialStatementRowMapper.toRowMaps(context.dataRows()),
-                context.financialStatement(),
-                context.exportStyle(),
-                toAnnotationTexts(context.annotations()),
-                context.visualSignature()
-        );
-
-        financialStatementMailPort.sendReport(
-                command.getToEmail(),
-                "Financial Statement Export",
-                "Adjunto encontraras el reporte financiero solicitado.",
-                exportedDocument.content(),
-                exportedDocument.fileName(),
-                exportedDocument.contentType()
-        );
-
-        if (command.getReportId() != null) {
-            financialStatementCommandPort.registerDeliveryEvent(
-                    command.getReportId(),
-                    EDeliveryWay.EMAIL.name(),
-                    "Reporte enviado por correo a " + command.getToEmail() + ".",
-                    "EMAILED"
-            );
-        }
-
-    }
-
-    @Override
     public FinancialStatementDocument download(UUID reportId, EReportExportFormat format) {
         if (reportId == null) {
-            throw new IllegalArgumentException("reportId is required.");
+            throw new IllegalArgumentException("El reportId es obligatorio.");
         }
 
         FinancialStatementGenerationResult snapshot = financialStatementCommandPort.getFinancialStatementSnapshot(reportId)
-                .orElseThrow(() -> new IllegalArgumentException("Financial statement report not found."));
+                .orElseThrow(() -> new IllegalArgumentException("No se encontro el reporte del estado financiero."));
 
         if (snapshot.getFinancialStatement() == null) {
-            throw new IllegalArgumentException("Financial statement report not found.");
+            throw new IllegalArgumentException("No se encontro el reporte del estado financiero.");
         }
 
         FinancialStatementReport report = snapshot.getFinancialStatement();
@@ -165,7 +115,7 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
             Map<String, Object> financialStatement,
             FinancialStatementExportStyle requestedExportStyle,
             List<FinancialStatementAnnotation> requestedAnnotations,
-            FinancialStatementVisualSignature requestedVisualSignature
+            List<FinancialStatementVisualSignature> requestedVisualSignatures
     ) {
         String requestedEnterpriseName = enterpriseName;
         String resolvedEnterpriseName = null;
@@ -176,7 +126,9 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 ? new LinkedHashMap<>(financialStatement)
                 : new LinkedHashMap<>();
         FinancialStatementExportStyle resolvedExportStyle = requestedExportStyle;
-        FinancialStatementVisualSignature resolvedVisualSignature = requestedVisualSignature;
+        List<FinancialStatementVisualSignature> resolvedVisualSignatures = requestedVisualSignatures != null
+                ? requestedVisualSignatures
+                : List.of();
 
         boolean equityChangesRequested = "STATEMENT_CHANGES_EQUITY".equalsIgnoreCase(
                 String.valueOf(resolvedFinancialStatement.get("type"))
@@ -245,7 +197,7 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
                 resolvedAnnotations,
                 resolvedFinancialStatement,
                 resolvedExportStyle,
-                resolvedVisualSignature
+                resolvedVisualSignatures
         );
     }
 
@@ -300,7 +252,7 @@ public class FinancialStatementDeliveryUC implements IFinancialStatementDelivery
             List<FinancialStatementAnnotation> annotations,
             Map<String, Object> financialStatement,
             FinancialStatementExportStyle exportStyle,
-            FinancialStatementVisualSignature visualSignature
+            List<FinancialStatementVisualSignature> visualSignatures
     ) {
     }
 }

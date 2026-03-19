@@ -27,7 +27,7 @@ public class FinancialStatementGenerationStrategyResolver {
             FinancialStatementGenerationStrategy existing = strategiesByType.putIfAbsent(strategy.supports(), strategy);
             if (existing != null) {
                 throw new IllegalStateException(
-                        "Duplicate financial statement generation strategy for type " + strategy.supports() + "."
+                        "Hay estrategias duplicadas para el tipo de reporte " + strategy.supports() + "."
                 );
             }
         }
@@ -35,12 +35,14 @@ public class FinancialStatementGenerationStrategyResolver {
 
     public FinancialStatementGenerationStrategy resolve(EFinancialStatementType type) {
         if (type == null) {
-            throw new IllegalArgumentException("Financial statement type is required.");
+            throw new IllegalArgumentException("El tipo de reporte es obligatorio.");
         }
 
         FinancialStatementGenerationStrategy strategy = strategiesByType.get(type);
         if (strategy == null) {
-            throw new IllegalArgumentException("No financial statement generation strategy configured for type " + type + ".");
+            throw new IllegalArgumentException(
+                    "No hay una estrategia de generacion configurada para el tipo de reporte " + type + "."
+            );
         }
 
         return strategy;

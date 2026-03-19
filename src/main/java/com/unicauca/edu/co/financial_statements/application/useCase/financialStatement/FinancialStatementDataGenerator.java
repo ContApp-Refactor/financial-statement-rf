@@ -13,7 +13,7 @@ public class FinancialStatementDataGenerator {
 
     public FinancialStatementDataPayload generate(FinancialStatementRequest request) {
         if (request == null || request.getType() == null) {
-            throw new IllegalArgumentException("Financial statement request type is required.");
+            throw new IllegalArgumentException("El tipo de reporte de la solicitud es obligatorio.");
         }
 
         return strategyResolver.resolve(request.getType()).generate(request);

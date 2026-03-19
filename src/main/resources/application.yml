@@ -4,7 +4,7 @@
 
   profiles:
     active:
-      - ${PROFILE:dev}
+      - ${PROFILE:local}
 
 server:
   error:

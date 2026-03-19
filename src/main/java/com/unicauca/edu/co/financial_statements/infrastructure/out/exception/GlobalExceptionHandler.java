@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
         return ResponseDTO.<Void>builder()
                 .statusCode(HttpStatus.BAD_GATEWAY.value())
                 .code(HttpStatus.BAD_GATEWAY.value())
-                .message("Error al generar el reporte. Intente más tarde")
+                .message("Error al generar el reporte. Intente mas tarde.")
                 .build()
                 .of();
     }
@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
         return ResponseDTO.<Void>builder()
                 .statusCode(status.value())
                 .code(status.value())
-                .message("Error al generar el reporte. Intente más tarde")
+                .message("Error al generar el reporte. Intente mas tarde.")
                 .build()
                 .of();
     }
@@ -65,8 +65,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ResponseDTO<Void>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .findFirst()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .orElse("Validation error");
+                .map(error -> error.getDefaultMessage())
+                .orElse("Error de validacion.");
 
         return ResponseDTO.<Void>builder()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
@@ -82,9 +82,9 @@ public class GlobalExceptionHandler {
                 ? ex.getMostSpecificCause().getMessage()
                 : ex.getMessage();
 
-        String message = "Invalid request payload. Verify JSON structure and use date format yyyy-MM-dd or dd/MM/yyyy.";
+        String message = "Carga util invalida. Verifique la estructura JSON y use el formato de fecha yyyy-MM-dd o dd/MM/yyyy.";
         if (detailedMessage != null && detailedMessage.contains("LocalDate")) {
-            message = "Invalid date format. Use yyyy-MM-dd or dd/MM/yyyy.";
+            message = "Formato de fecha invalido. Use yyyy-MM-dd o dd/MM/yyyy.";
         }
 
         return ResponseDTO.<Void>builder()

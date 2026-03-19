@@ -68,7 +68,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
     @Override
     public List<AccountingEntry> findAccountingEntries(String entId, LocalDate startDate, LocalDate endDate) {
         if (!StringUtils.hasText(properties.getBaseUrl())) {
-            throw new IllegalStateException("The accounting information service URL is not configured.");
+            throw new IllegalStateException("La URL del servicio de informacion contable no esta configurada.");
         }
 
         log.debug(
@@ -124,7 +124,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
             log.error("Timeout or connectivity error requesting accounting information from {}", filteredRequestUri, exception);
             throw new AccountInfoClientException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "The accounting module is unavailable or timed out.",
+                    "El modulo contable no esta disponible o agoto el tiempo de espera.",
                     exception
             );
         }
@@ -336,29 +336,29 @@ public class AccountInfoClient implements IAccountingInfoClient {
 
     private void validateSource(AccountInfoMovementResponse source) {
         if (source == null) {
-            throw invalidPayload("The accounting module returned a null movement.");
+            throw invalidPayload("El modulo contable devolvio un movimiento nulo.");
         }
         if (source.getAccount() == null) {
-            throw invalidPayload("The accounting module returned a movement without account.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin cuenta contable.");
         }
         if (source.getAccountingMovement() == null) {
-            throw invalidPayload("The accounting module returned a movement without accountingMovement.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin detalle contable.");
         }
         if (!StringUtils.hasText(source.getDate())) {
-            throw invalidPayload("The accounting module returned a movement without date.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin fecha.");
         }
         if (!StringUtils.hasText(source.getAccount().getCode())) {
-            throw invalidPayload("The accounting module returned a movement without account.code.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin codigo de cuenta.");
         }
         if (!StringUtils.hasText(source.getAccount().getNature())) {
-            throw invalidPayload("The accounting module returned a movement without account.nature.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin naturaleza de cuenta.");
         }
     }
 
     private LocalDate parseDate(String value) {
         String normalizedValue = value != null ? value.trim() : null;
         if (!StringUtils.hasText(normalizedValue)) {
-            throw invalidPayload("The accounting module returned a movement without a valid date.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin una fecha valida.");
         }
 
         try {
@@ -366,7 +366,8 @@ public class AccountInfoClient implements IAccountingInfoClient {
         } catch (DateTimeParseException ignored) {
             if (!properties.isAcceptLegacyDateFormat()) {
                 throw invalidPayload(
-                        "The accounting module returned an unsupported date format: " + normalizedValue + ". Expected yyyy-MM-dd."
+                        "El modulo contable devolvio un formato de fecha no soportado: "
+                                + normalizedValue + ". Use yyyy-MM-dd."
                 );
             }
         }
@@ -375,7 +376,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
             return LocalDate.parse(normalizedValue, LEGACY_MOCK_DATE_FORMATTER);
         } catch (DateTimeParseException exception) {
             throw invalidPayload(
-                    "The accounting module returned an unsupported date format: " + normalizedValue + "."
+                    "El modulo contable devolvio un formato de fecha no soportado: " + normalizedValue + "."
             );
         }
     }
@@ -383,7 +384,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
     private String normalizeNature(String value) {
         String normalized = value != null ? value.trim().toUpperCase(Locale.ROOT) : null;
         if (!"DEBITO".equals(normalized) && !"CREDITO".equals(normalized)) {
-            throw invalidPayload("The accounting module returned an unsupported account.nature: " + value + ".");
+            throw invalidPayload("El modulo contable devolvio una naturaleza de cuenta no soportada: " + value + ".");
         }
         return normalized;
     }
@@ -391,7 +392,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
     private String normalizeAccountCode(String value) {
         String normalized = value != null ? value.trim() : null;
         if (!StringUtils.hasText(normalized)) {
-            throw invalidPayload("The accounting module returned a movement without a valid account.code.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin un codigo de cuenta valido.");
         }
         return normalized;
     }
@@ -410,7 +411,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
 
         return new AccountInfoClientException(
                 HttpStatus.BAD_GATEWAY,
-                "The accounting module request failed with status " + exception.getStatusCode().value() + ".",
+                "La solicitud al modulo contable fallo con el estado " + exception.getStatusCode().value() + ".",
                 exception
         );
     }

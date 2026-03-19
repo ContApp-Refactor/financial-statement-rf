@@ -35,24 +35,6 @@ spring:
         jwt:
           issuer-uri: ${JWT_ISSUER_URI:http://localhost:8090/auth/realms/oauth2-realm}
           jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8090/auth/realms/oauth2-realm/protocol/openid-connect/certs}
-  mail:
-    host: ${MAIL_HOST:}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: ${MAIL_SMTP_AUTH:true}
-          starttls:
-            enable: ${MAIL_SMTP_STARTTLS:true}
-
-mail:
-  provider: ${MAIL_PROVIDER:smtp}
-  from: ${MAIL_FROM:no-reply@contapp.local}
-  resend:
-    api-key: ${RESEND_API_KEY:}
-    reply-to: ${RESEND_REPLY_TO:}
 
 server:
   port: ${PORT:8081}
@@ -97,10 +79,3 @@ services:
     bearer-token: ${ACCOUNT_INFO_SERVICE_BEARER_TOKEN:}
     mock-mode-enabled: ${ACCOUNT_INFO_SERVICE_MOCK_MODE_ENABLED:false}
     accept-legacy-date-format: ${ACCOUNT_INFO_SERVICE_ACCEPT_LEGACY_DATE_FORMAT:true}
-
-report-email:
-  scheduler:
-    fixed-delay-ms: ${REPORT_EMAIL_SCHEDULER_DELAY_MS:60000}
-    default-timezone: ${REPORT_EMAIL_SCHEDULER_DEFAULT_TIMEZONE:America/Bogota}
-    claim-lease-ms: ${REPORT_EMAIL_SCHEDULER_CLAIM_LEASE_MS:300000}
-    failure-retry-delay-ms: ${REPORT_EMAIL_SCHEDULER_FAILURE_RETRY_DELAY_MS:300000}

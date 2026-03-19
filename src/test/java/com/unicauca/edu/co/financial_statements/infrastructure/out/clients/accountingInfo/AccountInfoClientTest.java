@@ -189,7 +189,7 @@ class AccountInfoClientTest {
 
         assertThatThrownBy(() -> client.findAccountingEntries(null, null, null))
                 .isInstanceOf(AccountInfoClientException.class)
-                .hasMessageContaining("account.code");
+                .hasMessageContaining("codigo de cuenta");
 
         server.verify();
     }
@@ -211,7 +211,7 @@ class AccountInfoClientTest {
 
         assertThatThrownBy(() -> client.findAccountingEntries(null, null, null))
                 .isInstanceOf(AccountInfoClientException.class)
-                .hasMessageContaining("Expected yyyy-MM-dd");
+                .hasMessageContaining("Use yyyy-MM-dd");
 
         server.verify();
     }

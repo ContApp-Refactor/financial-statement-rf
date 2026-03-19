@@ -19,10 +19,10 @@ import java.time.LocalDate;
 @Builder
 public class GenerateFinancialStatementRequest {
 
-    @NotBlank(message = "entId is required")
+    @NotBlank(message = "El entId es obligatorio.")
     private String entId;
 
-    @NotNull(message = "type is required")
+    @NotNull(message = "El tipo de reporte es obligatorio.")
     private EFinancialStatementType type;
 
     @Valid

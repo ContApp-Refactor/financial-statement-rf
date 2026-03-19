@@ -77,7 +77,7 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
     @Transactional(readOnly = true)
     public PageResult<FinancialStatementHistoryItem> getHistoryByEnterprise(String enterpriseId, int page, int size, String sort) {
         if (!StringUtils.hasText(enterpriseId)) {
-            throw new IllegalArgumentException("enterpriseId is required.");
+            throw new IllegalArgumentException("El enterpriseId es obligatorio.");
         }
 
         Pageable pageable = buildHistoryPageable(page, size, sort);
@@ -97,7 +97,7 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
     @Transactional(readOnly = true)
     public List<FinancialStatementLog> getLogsByReportId(UUID reportId) {
         if (reportId == null) {
-            throw new IllegalArgumentException("reportId is required.");
+            throw new IllegalArgumentException("El reportId es obligatorio.");
         }
 
         return financialStatementPersistencePort.findLogsByReportId(reportId).stream()
@@ -175,27 +175,21 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
     public void registerDeliveryEvent(UUID reportId, String deliveryWay, String message, String eventType) {
         FinancialStatementEntity statement = resolveFinancialStatement(reportId);
         OffsetDateTime eventAt = OffsetDateTime.now();
-        String resolvedDeliveryWay = StringUtils.hasText(deliveryWay)
-                ? deliveryWay.trim().toUpperCase()
-                : EDeliveryWay.DOWNLOAD.name();
+        String resolvedDeliveryWay = EDeliveryWay.DOWNLOAD.name();
         String resolvedEventType = StringUtils.hasText(eventType)
                 ? eventType.trim().toUpperCase()
                 : "DELIVERED";
-        String resolvedState = "EMAIL".equals(resolvedDeliveryWay) || "SCHEDULED_EMAIL".equals(resolvedDeliveryWay)
-                ? "EMAILED"
-                : "DOWNLOADED";
+        String resolvedState = "DOWNLOADED";
         String resolvedMessage = StringUtils.hasText(message)
                 ? message
-                : ("EMAILED".equals(resolvedState)
-                ? "Reporte enviado por correo."
-                : "Reporte descargado correctamente.");
+                : "Reporte descargado correctamente.";
 
         appendHistory(statement, resolvedState, resolvedDeliveryWay, eventAt);
         appendLog(
                 statement,
                 resolvedEventType,
                 resolvedMessage,
-                "EMAIL".equals(resolvedDeliveryWay) || "SCHEDULED_EMAIL".equals(resolvedDeliveryWay) ? "mail" : "download",
+                "download",
                 "INFO",
                 eventAt
         );
@@ -241,10 +235,7 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
                     persist,
                     exception
             );
-            throw new FinancialStatementGenerationException(
-                    "Error al generar el reporte. Intente más tarde",
-                    exception
-            );
+            throw new FinancialStatementGenerationException("Error al generar el reporte. Intente mas tarde.", exception);
         }
 
         if (persist) {
@@ -351,11 +342,11 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
 
     private FinancialStatementEntity resolveFinancialStatement(UUID reportId) {
         if (reportId == null) {
-            throw new IllegalArgumentException("reportId is required.");
+            throw new IllegalArgumentException("El reportId es obligatorio.");
         }
 
         return financialStatementPersistencePort.findFinancialStatementByReportId(reportId)
-                .orElseThrow(() -> new IllegalArgumentException("Financial statement report not found."));
+                .orElseThrow(() -> new IllegalArgumentException("No se encontro el reporte del estado financiero."));
     }
 
     private void appendHistory(

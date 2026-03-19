@@ -42,7 +42,7 @@ class FinancialStatementGenerationStrategyResolverTest {
                 strategy(EFinancialStatementType.INCOME_STATEMENT)
         )))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Duplicate financial statement generation strategy");
+                .hasMessageContaining("estrategias duplicadas");
     }
 
     private FinancialStatementGenerationStrategy strategy(EFinancialStatementType type) {

@@ -2,6 +2,7 @@ package com.unicauca.edu.co.financial_statements.infrastructure.out.export;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementCriteria;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementVisualSignature;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.export.jasper.FinancialStatementJasperDesignFactory;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.export.jasper.FinancialStatementJasperRenderer;
@@ -16,6 +17,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Base64;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,6 +26,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FinancialStatementExportServiceTest {
+
+    private static final String SAMPLE_SIGNATURE_BASE64 =
+            "iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAOSURBVBhXY2BgYPgPAgAO+gT8M0OZvQAAAABJRU5ErkJggg==";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final FinancialStatementExportCriteriaResolver criteriaResolver =
@@ -309,6 +314,79 @@ class FinancialStatementExportServiceTest {
                     .contains("29/03/2024")
                     .contains("Fecha de Corte Actual")
                     .contains("29/03/2025");
+        }
+    }
+
+    @Test
+    void shouldIncludeTwoVisualSignaturesInPdfAndExcel() throws IOException {
+        List<Map<String, Object>> rows = List.of(
+                financialPositionRow("Caja", "DETAIL", "175000000", "100", "156000000", "100", "19000000", "0")
+        );
+
+        Map<String, Object> financialStatement = new LinkedHashMap<>();
+        financialStatement.put("type", "STATEMENT_FINANCIAL_POSITION");
+        financialStatement.put("criteria", Map.of(
+                "currentCutoffDate", "2025-03-29",
+                "previousCutoffDate", "2024-03-29"
+        ));
+
+        List<FinancialStatementVisualSignature> signatures = List.of(
+                FinancialStatementVisualSignature.builder()
+                        .fileName("firma-contadora.png")
+                        .contentType("image/png")
+                        .content(Base64.getDecoder().decode(SAMPLE_SIGNATURE_BASE64))
+                        .signerName("Maria Perez")
+                        .signerRole("Contadora General")
+                        .build(),
+                FinancialStatementVisualSignature.builder()
+                        .fileName("firma-representante.png")
+                        .contentType("image/png")
+                        .content(Base64.getDecoder().decode(SAMPLE_SIGNATURE_BASE64))
+                        .signerName("Carlos Gomez")
+                        .signerRole("Representante Legal")
+                        .build()
+        );
+
+        FinancialStatementExportService.ExportedFile pdfFile = exportService.export(
+                EReportExportFormat.PDF,
+                "Estado de Situacion Financiera",
+                "ENT-TEST-001",
+                rows,
+                financialStatement,
+                null,
+                List.of(),
+                signatures
+        );
+
+        try (PDDocument document = Loader.loadPDF(pdfFile.content())) {
+            String pdfText = new PDFTextStripper().getText(document);
+
+            assertThat(pdfText)
+                    .contains("Maria Perez")
+                    .contains("Contadora General")
+                    .contains("Carlos Gomez")
+                    .contains("Representante Legal");
+        }
+
+        FinancialStatementExportService.ExportedFile excelFile = exportService.export(
+                EReportExportFormat.EXCEL,
+                "Estado de Situacion Financiera",
+                "ENT-TEST-001",
+                rows,
+                financialStatement,
+                null,
+                List.of(),
+                signatures
+        );
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(excelFile.content()))) {
+            String sheetText = extractSheetText(workbook);
+
+            assertThat(sheetText)
+                    .contains("Maria Perez")
+                    .contains("Contadora General")
+                    .contains("Carlos Gomez")
+                    .contains("Representante Legal");
         }
     }
 

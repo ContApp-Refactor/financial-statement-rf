@@ -36,7 +36,7 @@ class DefaultFinancialStatementTableModelResolver implements FinancialStatementT
             List<FinancialStatementRow> typedRows,
             Map<String, Object> financialStatement,
             List<String> annotationTexts,
-            byte[] signatureImage
+            List<FinancialStatementSignatureBlock> signatures
     ) {
         List<String> columns;
         List<Map<String, Object>> rows;
@@ -71,7 +71,7 @@ class DefaultFinancialStatementTableModelResolver implements FinancialStatementT
             columns = List.of("Descripcion");
         }
         if (rows.isEmpty()) {
-            rows = List.of(singleMessageRow(columns.size(), "No data available"));
+            rows = List.of(singleMessageRow(columns.size(), "No hay informacion disponible."));
         }
 
         appendAnnotations(rows, columns.size(), annotationTexts);
@@ -83,7 +83,7 @@ class DefaultFinancialStatementTableModelResolver implements FinancialStatementT
                 buildCriteriaText(financialStatement),
                 columns,
                 rows,
-                signatureImage
+                signatures != null ? signatures : List.of()
         );
     }
 

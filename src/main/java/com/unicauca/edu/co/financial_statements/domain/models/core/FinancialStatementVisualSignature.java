@@ -13,4 +13,6 @@ public class FinancialStatementVisualSignature {
     private String fileName;
     private String contentType;
     private byte[] content;
+    private String signerName;
+    private String signerRole;
 }

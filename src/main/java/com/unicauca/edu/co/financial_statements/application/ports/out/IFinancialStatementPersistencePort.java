@@ -1,6 +1,5 @@
 package com.unicauca.edu.co.financial_statements.application.ports.out;
 
-import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementEmailScheduleEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementAnnotationEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementHistoryEntity;
@@ -9,7 +8,6 @@ import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.e
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,19 +45,4 @@ public interface IFinancialStatementPersistencePort {
     List<FinancialStatementAnnotationEntity> findAnnotationsByReportId(UUID reportId);
 
     void deleteAnnotation(FinancialStatementAnnotationEntity entity);
-
-    FinancialStatementEmailScheduleEntity saveEmailSchedule(FinancialStatementEmailScheduleEntity entity);
-
-    Optional<FinancialStatementEmailScheduleEntity> findEmailScheduleById(Long scheduleId);
-
-    List<FinancialStatementEmailScheduleEntity> findEmailSchedulesByReportId(UUID reportId);
-
-    List<FinancialStatementEmailScheduleEntity> findDueActiveEmailSchedules(OffsetDateTime cutoffAt);
-
-    boolean claimDueEmailSchedule(
-            Long scheduleId,
-            OffsetDateTime cutoffAt,
-            OffsetDateTime claimedUntil,
-            OffsetDateTime updatedAt
-    );
 }
