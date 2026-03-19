@@ -10,6 +10,6 @@ public record FinancialStatementTableModel(
         String criteriaText,
         List<String> columns,
         List<Map<String, Object>> rows,
-        byte[] signatureImage
+        List<FinancialStatementSignatureBlock> signatures
 ) {
 }

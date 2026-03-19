@@ -14,9 +14,9 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class DeleteFinancialStatementTemplatesRequest {
-    @NotBlank(message = "enterpriseId is required")
+    @NotBlank(message = "El enterpriseId es obligatorio.")
     private String enterpriseId;
 
-    @NotEmpty(message = "templateIds are required")
+    @NotEmpty(message = "Los templateIds son obligatorios.")
     private List<Long> templateIds;
 }

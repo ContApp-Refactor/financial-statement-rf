@@ -1,4 +1,4 @@
-﻿param([string]$OutputDir = "docs/demo")
+param([string]$OutputDir = "docs/demo")
 $ErrorActionPreference = 'Stop'
 
 function Get-RepoPath { param([string]$RelativePath) Join-Path (Get-Location) $RelativePath }
@@ -164,7 +164,7 @@ $incomeSummaryRows = @(
 )
 
 $demoRows = @(
-    [pscustomobject]@{ Reporte = 'Estado de Situacion Financiera'; FechaActual = '2025-03-29'; FechaAnterior = '2024-03-29'; Explicacion = 'El backend consulta movimientos hasta la fecha de corte actual y luego arma dos cortes: acumulado hasta 2024-03-29 y acumulado hasta 2025-03-29.'; ClaseContable = 'Clases 1, 2 y 3' },
+    [pscustomobject]@{ Reporte = 'Estado de Situacion Financiera'; FechaActual = '2025-03-29'; FechaAnterior = '2024-03-29'; Explicacion = 'El backend consulta movimientos hasta la fecha de corte seleccionada y arma dos cortes comparativos. Si la fecha elegida es posterior al ultimo movimiento disponible, el reporte se genera con los saldos acumulados hasta ese ultimo registro.'; ClaseContable = 'Clases 1, 2 y 3' },
     [pscustomobject]@{ Reporte = 'Estado de Resultados'; FechaActual = '2025-01-01 a 2025-03-29'; FechaAnterior = '2024-01-01 a 2024-03-29'; Explicacion = 'El backend filtra dos periodos independientes y agrupa cuentas de ingresos, costos, gastos e impuestos.'; ClaseContable = 'Clases 4, 5 y 6' }
 )
 
@@ -226,7 +226,7 @@ $htmlContent = @"
   <div class="note"><strong>Flujo tecnico:</strong> el cliente HTTP <code>AccountInfoClient</code> consulta el MockAPI, transforma el JSON a objetos <code>AccountingEntry</code>, filtra por empresa y fechas, y luego el caso de uso <code>FinancialStatementCommandUC</code> aplica la clasificacion contable segun el tipo de reporte.</div>
   <ul><li><strong>Estado de Situacion Financiera:</strong> utiliza cuentas de clases 1, 2 y 3.</li><li><strong>Estado de Resultados:</strong> utiliza cuentas de clases 4, 5 y 6.</li><li>Despues de generar el reporte, el sistema persiste un snapshot, historial y logs en PostgreSQL.</li></ul>
   <h2>4. Explicacion para Estado de Situacion Financiera</h2>
-  <p>Para este reporte el backend trabaja con <strong>fechas de corte</strong>. Internamente consulta los movimientos disponibles hasta la fecha de corte actual y luego construye dos vistas comparativas: un corte anterior y un corte actual. En el mock actual, el corte <code>2025-03-29</code> contiene los movimientos de 2024 y 2025 que estan registrados hasta esa fecha, mientras que el corte <code>2024-03-29</code> solo incluye los movimientos de 2024.</p>
+  <p>Para este reporte el backend trabaja con <strong>fechas de corte</strong>. El sistema toma todos los movimientos contables registrados hasta la fecha seleccionada y construye dos vistas comparativas: un corte anterior y un corte actual. Si la fecha elegida es posterior al ultimo movimiento disponible, el reporte igual se genera con los saldos acumulados hasta ese ultimo registro, siempre que no existan movimientos posteriores.</p>
   $demoHtml
   <p>En el archivo Excel adjunto se incluye una hoja llamada <strong>03_ESF_Cuentas</strong> donde se observa que cada cuenta del mock fue asociada a una linea del Estado de Situacion Financiera.</p>
   $esfHtml

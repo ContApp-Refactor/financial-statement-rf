@@ -2,12 +2,10 @@ package com.unicauca.edu.co.financial_statements.application.useCase.financialSt
 
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementCommandPort;
 import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementExportPort;
-import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementMailPort;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementAnnotation;
-import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementEmailExportCommand;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementCriteria;
-import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportStyle;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportCommand;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportStyle;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementGenerationResult;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementReport;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementRow;
@@ -33,9 +31,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.same;
 
 @ExtendWith(MockitoExtension.class)
 class FinancialStatementDeliveryUCTest {
@@ -46,9 +44,6 @@ class FinancialStatementDeliveryUCTest {
     @Mock
     private IFinancialStatementExportPort financialStatementExportPort;
 
-    @Mock
-    private IFinancialStatementMailPort financialStatementMailPort;
-
     private FinancialStatementDeliveryUC useCase;
 
     @BeforeEach
@@ -56,7 +51,6 @@ class FinancialStatementDeliveryUCTest {
         useCase = new FinancialStatementDeliveryUC(
                 financialStatementCommandPort,
                 financialStatementExportPort,
-                financialStatementMailPort,
                 new FinancialStatementReportNameResolver(),
                 new FinancialStatementRowMapper(),
                 new FinancialStatementReportMetadataMapper(),
@@ -192,7 +186,7 @@ class FinancialStatementDeliveryUCTest {
     }
 
     @Test
-    void shouldKeepSelectedTemplateAnnotationsAndSignatureWhenExportingByEmail() throws Exception {
+    void shouldKeepSelectedTemplateAnnotationsAndVisualSignaturesDuringExport() {
         UUID reportId = UUID.randomUUID();
         FinancialStatementRow snapshotRow = FinancialStatementRow.builder()
                 .lineDescription("Caja")
@@ -202,7 +196,7 @@ class FinancialStatementDeliveryUCTest {
                 .financialStatement(FinancialStatementReport.builder()
                         .reportId(reportId)
                         .type(EFinancialStatementType.STATEMENT_FINANCIAL_POSITION)
-                        .entId("ENT-EMAIL-001")
+                        .entId("ENT-SIGN-001")
                         .criteria(FinancialStatementCriteria.builder()
                                 .currentCutoffDate(LocalDate.of(2026, 12, 31))
                                 .previousCutoffDate(LocalDate.of(2025, 12, 31))
@@ -218,63 +212,65 @@ class FinancialStatementDeliveryUCTest {
                 .fontSize(12)
                 .mainColor("#003366")
                 .build();
-        FinancialStatementVisualSignature visualSignature = FinancialStatementVisualSignature.builder()
-                .fileName("firma.png")
-                .contentType("image/png")
-                .content(new byte[]{1, 2, 3})
-                .build();
+        List<FinancialStatementVisualSignature> visualSignatures = List.of(
+                FinancialStatementVisualSignature.builder()
+                        .fileName("firma-contador.png")
+                        .contentType("image/png")
+                        .content(new byte[]{1, 2, 3})
+                        .signerName("Maria Perez")
+                        .signerRole("Contadora General")
+                        .build(),
+                FinancialStatementVisualSignature.builder()
+                        .fileName("firma-gerente.png")
+                        .contentType("image/png")
+                        .content(new byte[]{4, 5, 6})
+                        .signerName("Carlos Gomez")
+                        .signerRole("Representante Legal")
+                        .build()
+        );
 
         when(financialStatementCommandPort.getFinancialStatementSnapshot(reportId))
                 .thenReturn(Optional.of(snapshot));
         when(financialStatementExportPort.export(
                 eq(EReportExportFormat.PDF),
                 eq("Estado de Situacion Financiera"),
-                eq("ENT-EMAIL-001"),
+                eq("ENT-SIGN-001"),
                 any(),
                 any(),
                 same(exportStyle),
-                eq(List.of("Observacion para correo")),
-                same(visualSignature)
+                eq(List.of("Observacion para exportacion")),
+                same(visualSignatures)
         )).thenReturn(new IFinancialStatementExportPort.ExportedDocument(
                 "pdf".getBytes(),
                 "application/pdf",
                 "reporte.pdf"
         ));
 
-        useCase.exportByEmail(FinancialStatementEmailExportCommand.builder()
+        useCase.export(FinancialStatementExportCommand.builder()
                 .reportId(reportId)
                 .format(EReportExportFormat.PDF)
-                .toEmail("usuario@dominio.com")
                 .annotations(List.of(FinancialStatementAnnotation.builder()
-                        .text("Observacion para correo")
+                        .text("Observacion para exportacion")
                         .build()))
-                .visualSignature(visualSignature)
+                .visualSignatures(visualSignatures)
                 .exportStyle(exportStyle)
                 .build());
 
         verify(financialStatementExportPort).export(
                 eq(EReportExportFormat.PDF),
                 eq("Estado de Situacion Financiera"),
-                eq("ENT-EMAIL-001"),
+                eq("ENT-SIGN-001"),
                 any(),
                 any(),
                 same(exportStyle),
-                eq(List.of("Observacion para correo")),
-                same(visualSignature)
-        );
-        verify(financialStatementMailPort).sendReport(
-                eq("usuario@dominio.com"),
-                eq("Financial Statement Export"),
-                eq("Adjunto encontraras el reporte financiero solicitado."),
-                any(),
-                eq("reporte.pdf"),
-                eq("application/pdf")
+                eq(List.of("Observacion para exportacion")),
+                same(visualSignatures)
         );
         verify(financialStatementCommandPort).registerDeliveryEvent(
                 eq(reportId),
-                eq(EDeliveryWay.EMAIL.name()),
-                eq("Reporte enviado por correo a usuario@dominio.com."),
-                eq("EMAILED")
+                eq(EDeliveryWay.DOWNLOAD.name()),
+                eq("Reporte exportado en formato PDF."),
+                eq("EXPORTED")
         );
     }
 }

@@ -16,7 +16,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FinancialStatementAnnotationManager {
 
-    private static final String EMPTY_ANNOTATION_MESSAGE = "Debe escribir una anotación antes de guardar";
+    private static final String EMPTY_ANNOTATION_MESSAGE = "Debe escribir una anotacion antes de guardar.";
 
     private final IFinancialStatementPersistencePort financialStatementPersistencePort;
 
@@ -46,12 +46,12 @@ public class FinancialStatementAnnotationManager {
     public FinancialStatementAnnotation updateAnnotation(UUID reportId, Long annotationId, String text) {
         validateReportId(reportId);
         if (annotationId == null) {
-            throw new IllegalArgumentException("annotationId is required.");
+            throw new IllegalArgumentException("El annotationId es obligatorio.");
         }
 
         FinancialStatementAnnotationEntity entity = financialStatementPersistencePort
                 .findAnnotationByIdAndReportId(annotationId, reportId)
-                .orElseThrow(() -> new IllegalArgumentException("Financial statement annotation not found."));
+                .orElseThrow(() -> new IllegalArgumentException("No se encontro la anotacion del estado financiero."));
 
         entity.setText(normalizeText(text));
         entity.setUpdatedAt(OffsetDateTime.now());
@@ -61,12 +61,12 @@ public class FinancialStatementAnnotationManager {
     public void deleteAnnotation(UUID reportId, Long annotationId) {
         validateReportId(reportId);
         if (annotationId == null) {
-            throw new IllegalArgumentException("annotationId is required.");
+            throw new IllegalArgumentException("El annotationId es obligatorio.");
         }
 
         FinancialStatementAnnotationEntity entity = financialStatementPersistencePort
                 .findAnnotationByIdAndReportId(annotationId, reportId)
-                .orElseThrow(() -> new IllegalArgumentException("Financial statement annotation not found."));
+                .orElseThrow(() -> new IllegalArgumentException("No se encontro la anotacion del estado financiero."));
 
         financialStatementPersistencePort.deleteAnnotation(entity);
     }
@@ -75,12 +75,12 @@ public class FinancialStatementAnnotationManager {
         validateReportId(reportId);
 
         return financialStatementPersistencePort.findFinancialStatementByReportId(reportId)
-                .orElseThrow(() -> new IllegalArgumentException("Financial statement report not found."));
+                .orElseThrow(() -> new IllegalArgumentException("No se encontro el reporte del estado financiero."));
     }
 
     private void validateReportId(UUID reportId) {
         if (reportId == null) {
-            throw new IllegalArgumentException("reportId is required.");
+            throw new IllegalArgumentException("El reportId es obligatorio.");
         }
     }
 

@@ -3,8 +3,6 @@ package com.unicauca.edu.co.financial_statements.infrastructure.in.rest.controll
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementAnnotation;
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementCommandPort;
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementDeliveryPort;
-import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementEmailSchedulePort;
-import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementEmailSchedule;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementDocument;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementGenerationResult;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementHistoryItem;
@@ -12,12 +10,9 @@ import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStat
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementTemplate;
 import com.unicauca.edu.co.financial_statements.domain.models.core.PageResult;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.ResponseDTO;
-import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.CreateFinancialStatementEmailScheduleRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.DeleteFinancialStatementTemplatesRequest;
-import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.ExportFinancialStatementEmailRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.ExportFinancialStatementRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.GenerateFinancialStatementRequest;
-import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.UpdateFinancialStatementEmailScheduleStatusRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.UpsertFinancialStatementAnnotationRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.UpsertFinancialStatementTemplateRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.mapper.FinancialStatementRestMapper;
@@ -28,7 +23,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,7 +32,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -48,12 +41,11 @@ public class FinancialStatementCommandController {
 
     private final IFinancialStatementCommandPort financialStatementCommandPort;
     private final IFinancialStatementDeliveryPort financialStatementDeliveryPort;
-    private final IFinancialStatementEmailSchedulePort financialStatementEmailSchedulePort;
     private final FinancialStatementRestMapper financialStatementRestMapper;
 
     @GetMapping("/test")
     public ResponseEntity<String> test() {
-        return ResponseEntity.ok("Financial Statement Command Controller is working");
+        return ResponseEntity.ok("El controlador de estados financieros esta funcionando");
     }
 
     @PostMapping("/register")
@@ -67,7 +59,7 @@ public class FinancialStatementCommandController {
                 .data(reportResult)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement generated successfully")
+                .message("Estado financiero generado correctamente.")
                 .build()
                 .of();
     }
@@ -83,7 +75,7 @@ public class FinancialStatementCommandController {
                 .data(reportResult)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement preview generated successfully")
+                .message("Vista previa del estado financiero generada correctamente.")
                 .build()
                 .of();
     }
@@ -102,7 +94,7 @@ public class FinancialStatementCommandController {
                 .data(historyPage)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement history found")
+                .message("Historial del estado financiero encontrado.")
                 .build()
                 .of();
     }
@@ -119,13 +111,13 @@ public class FinancialStatementCommandController {
                 .data(logs)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement logs found")
+                .message("Registros del estado financiero encontrados.")
                 .build()
                 .of();
     }
 
     @PostMapping("/export")
-    public ResponseEntity<byte[]> exportFinancialStatement(@RequestBody ExportFinancialStatementRequest request) {
+    public ResponseEntity<byte[]> exportFinancialStatement(@Valid @RequestBody ExportFinancialStatementRequest request) {
         FinancialStatementDocument exportedFile = financialStatementDeliveryPort.export(
                 financialStatementRestMapper.toDomain(request)
         );
@@ -165,7 +157,7 @@ public class FinancialStatementCommandController {
                 .data(template)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement template saved successfully")
+                .message("Plantilla del estado financiero guardada correctamente.")
                 .build()
                 .of();
     }
@@ -181,7 +173,7 @@ public class FinancialStatementCommandController {
                 .data(template)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement template saved successfully")
+                .message("Plantilla del estado financiero guardada correctamente.")
                 .build()
                 .of();
     }
@@ -195,13 +187,13 @@ public class FinancialStatementCommandController {
                         .data(template)
                         .statusCode(HttpStatus.OK.value())
                         .code(HttpStatus.OK.value())
-                        .message("Financial statement template found")
+                        .message("Plantilla del estado financiero encontrada.")
                         .build()
                         .of())
                 .orElseGet(() -> ResponseDTO.<Object>builder()
                         .statusCode(HttpStatus.NOT_FOUND.value())
                         .code(HttpStatus.NOT_FOUND.value())
-                        .message("Financial statement template not found")
+                        .message("No se encontro la plantilla del estado financiero.")
                         .build()
                         .of());
     }
@@ -217,7 +209,7 @@ public class FinancialStatementCommandController {
                 .data(templates)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement templates found")
+                .message("Plantillas del estado financiero encontradas.")
                 .build()
                 .of();
     }
@@ -233,7 +225,7 @@ public class FinancialStatementCommandController {
                 .data(1)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement template deleted successfully")
+                .message("Plantilla del estado financiero eliminada correctamente.")
                 .build()
                 .of();
     }
@@ -251,7 +243,7 @@ public class FinancialStatementCommandController {
                 .data(deletedCount)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement templates deleted successfully")
+                .message("Plantillas del estado financiero eliminadas correctamente.")
                 .build()
                 .of();
     }
@@ -266,53 +258,7 @@ public class FinancialStatementCommandController {
                 .data(deletedCount)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement templates deleted successfully")
-                .build()
-                .of();
-    }
-
-    @PostMapping("/export/email")
-    public ResponseEntity<ResponseDTO<Void>> exportFinancialStatementByEmail(
-            @Valid @RequestBody ExportFinancialStatementEmailRequest request
-    ) throws Exception {
-        financialStatementDeliveryPort.exportByEmail(financialStatementRestMapper.toDomain(request));
-
-        return ResponseDTO.<Void>builder()
-                .statusCode(HttpStatus.OK.value())
-                .code(HttpStatus.OK.value())
-                .message("Financial statement email sent successfully")
-                .build()
-                .of();
-    }
-
-    @PostMapping("/email-schedules")
-    public ResponseEntity<ResponseDTO<FinancialStatementEmailSchedule>> createEmailSchedule(
-            @Valid @RequestBody CreateFinancialStatementEmailScheduleRequest request
-    ) {
-        FinancialStatementEmailSchedule schedule = financialStatementEmailSchedulePort
-                .createSchedule(financialStatementRestMapper.toDomain(request));
-
-        return ResponseDTO.<FinancialStatementEmailSchedule>builder()
-                .data(schedule)
-                .statusCode(HttpStatus.OK.value())
-                .code(HttpStatus.OK.value())
-                .message("Financial statement email schedule created successfully")
-                .build()
-                .of();
-    }
-
-    @GetMapping("/email-schedules")
-    public ResponseEntity<ResponseDTO<List<FinancialStatementEmailSchedule>>> getEmailSchedules(
-            @RequestParam UUID reportId
-    ) {
-        List<FinancialStatementEmailSchedule> schedules = financialStatementEmailSchedulePort
-                .getSchedulesByReportId(reportId);
-
-        return ResponseDTO.<List<FinancialStatementEmailSchedule>>builder()
-                .data(schedules)
-                .statusCode(HttpStatus.OK.value())
-                .code(HttpStatus.OK.value())
-                .message("Financial statement email schedules found")
+                .message("Plantillas del estado financiero eliminadas correctamente.")
                 .build()
                 .of();
     }
@@ -327,7 +273,7 @@ public class FinancialStatementCommandController {
                 .data(annotations)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement annotations found")
+                .message("Anotaciones del estado financiero encontradas.")
                 .build()
                 .of();
     }
@@ -344,7 +290,7 @@ public class FinancialStatementCommandController {
                 .data(annotation)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement annotation saved successfully")
+                .message("Anotacion del estado financiero guardada correctamente.")
                 .build()
                 .of();
     }
@@ -362,7 +308,7 @@ public class FinancialStatementCommandController {
                 .data(annotation)
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement annotation updated successfully")
+                .message("Anotacion del estado financiero actualizada correctamente.")
                 .build()
                 .of();
     }
@@ -377,24 +323,7 @@ public class FinancialStatementCommandController {
         return ResponseDTO.<Void>builder()
                 .statusCode(HttpStatus.OK.value())
                 .code(HttpStatus.OK.value())
-                .message("Financial statement annotation deleted successfully")
-                .build()
-                .of();
-    }
-
-    @PatchMapping("/email-schedules/{scheduleId}/status")
-    public ResponseEntity<ResponseDTO<FinancialStatementEmailSchedule>> updateEmailScheduleStatus(
-            @PathVariable Long scheduleId,
-            @Valid @RequestBody UpdateFinancialStatementEmailScheduleStatusRequest request
-    ) {
-        FinancialStatementEmailSchedule schedule = financialStatementEmailSchedulePort
-                .updateScheduleStatus(scheduleId, Boolean.TRUE.equals(request.getActive()));
-
-        return ResponseDTO.<FinancialStatementEmailSchedule>builder()
-                .data(schedule)
-                .statusCode(HttpStatus.OK.value())
-                .code(HttpStatus.OK.value())
-                .message("Financial statement email schedule updated successfully")
+                .message("Anotacion del estado financiero eliminada correctamente.")
                 .build()
                 .of();
     }
@@ -424,7 +353,7 @@ public class FinancialStatementCommandController {
                         .data(snapshot)
                         .statusCode(HttpStatus.OK.value())
                         .code(HttpStatus.OK.value())
-                        .message("Financial statement snapshot found")
+                        .message("Snapshot del estado financiero encontrado.")
                         .build()
                         .of())
                 .or(() -> financialStatementCommandPort.getFinancialStatementReport(reportId)
@@ -432,13 +361,13 @@ public class FinancialStatementCommandController {
                                 .data(report)
                                 .statusCode(HttpStatus.OK.value())
                                 .code(HttpStatus.OK.value())
-                                .message("Financial statement report found")
+                                .message("Reporte del estado financiero encontrado.")
                                 .build()
                                 .of()))
                 .orElseGet(() -> ResponseDTO.<Object>builder()
                         .statusCode(HttpStatus.NOT_FOUND.value())
                         .code(HttpStatus.NOT_FOUND.value())
-                        .message("Financial statement report not found")
+                        .message("No se encontro el reporte del estado financiero.")
                         .build()
                         .of());
     }

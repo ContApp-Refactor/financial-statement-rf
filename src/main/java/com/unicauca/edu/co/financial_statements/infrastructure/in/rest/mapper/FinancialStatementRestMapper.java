@@ -4,8 +4,6 @@ import com.unicauca.edu.co.financial_statements.application.useCase.financialSta
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementCriteria;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementCriteriaRange;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementAnnotation;
-import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementEmailSchedule;
-import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementEmailExportCommand;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportCommand;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportStyle;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementGenerationResult;
@@ -17,8 +15,6 @@ import com.unicauca.edu.co.financial_statements.application.useCase.financialSta
 import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementRowMapper;
 import com.unicauca.edu.co.financial_statements.application.useCase.financialStatement.FinancialStatementTemplateExportStyleMapper;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
-import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.CreateFinancialStatementEmailScheduleRequest;
-import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.ExportFinancialStatementEmailRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.ExportFinancialStatementRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.FinancialStatementCriteriaRequest;
 import com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request.FinancialStatementCriteriaRangeRequest;
@@ -107,26 +103,8 @@ public class FinancialStatementRestMapper {
                 .financialStatement(request.getFinancialStatement())
                 .financialStatementData(financialStatementRowMapper.toTypedRows(request.getFinancialStatementData()))
                 .annotations(toAnnotations(request.getAnnotations()))
-                .visualSignature(toVisualSignature(request.getSignature()))
+                .visualSignatures(toVisualSignatures(request.getSignatures(), request.getSignature()))
                 .exportStyle(toExportStyle(request.getInfoReportTemplate()))
-                .build();
-    }
-
-    public FinancialStatementEmailExportCommand toDomain(ExportFinancialStatementEmailRequest request) {
-        if (request == null) {
-            return null;
-        }
-
-        return FinancialStatementEmailExportCommand.builder()
-                .reportId(request.getReportId())
-                .format(toExportFormat(request.getFormat()))
-                .enterpriseName(request.getEntName())
-                .financialStatement(request.getFinancialStatement())
-                .financialStatementData(financialStatementRowMapper.toTypedRows(request.getFinancialStatementData()))
-                .annotations(toAnnotations(request.getAnnotations()))
-                .visualSignature(toVisualSignature(request.getSignature()))
-                .exportStyle(toExportStyle(request.getInfoReportTemplate()))
-                .toEmail(request.getToEmail())
                 .build();
     }
 
@@ -170,25 +148,6 @@ public class FinancialStatementRestMapper {
                 .fontSize(request.getFontSize())
                 .mainColor(request.getMainColor())
                 .isDefault(request.getIsDefault())
-                .build();
-    }
-
-    public FinancialStatementEmailSchedule toDomain(CreateFinancialStatementEmailScheduleRequest request) {
-        if (request == null) {
-            return null;
-        }
-
-        return FinancialStatementEmailSchedule.builder()
-                .reportId(request.getReportId())
-                .recipientEmail(request.getRecipientEmail())
-                .format(request.getFormat() != null ? request.getFormat() : EReportExportFormat.PDF)
-                .frequency(request.getFrequency())
-                .hourOfDay(request.getHourOfDay())
-                .minuteOfHour(request.getMinuteOfHour())
-                .dayOfWeek(request.getDayOfWeek())
-                .dayOfMonth(request.getDayOfMonth())
-                .timezone(request.getTimezone())
-                .active(Boolean.TRUE)
                 .build();
     }
 
@@ -309,6 +268,31 @@ public class FinancialStatementRestMapper {
                 .toList();
     }
 
+    private List<FinancialStatementVisualSignature> toVisualSignatures(
+            List<VisualSignatureRequest> requests,
+            VisualSignatureRequest legacyRequest
+    ) {
+        List<VisualSignatureRequest> sourceRequests = requests != null && !requests.isEmpty()
+                ? requests
+                : (legacyRequest != null ? List.of(legacyRequest) : List.of());
+
+        if (sourceRequests.size() > 2) {
+            throw new IllegalArgumentException("Solo se permiten hasta 2 firmas.");
+        }
+
+        return sourceRequests.stream()
+                .filter(request -> request != null && hasAnySignatureContent(request))
+                .map(this::toVisualSignature)
+                .toList();
+    }
+
+    private boolean hasAnySignatureContent(VisualSignatureRequest request) {
+        return request != null
+                && (StringUtils.hasText(request.getBase64Content())
+                || StringUtils.hasText(request.getSignerName())
+                || StringUtils.hasText(request.getSignerRole()));
+    }
+
     private FinancialStatementVisualSignature toVisualSignature(VisualSignatureRequest request) {
         if (request == null) {
             return null;
@@ -317,7 +301,7 @@ public class FinancialStatementRestMapper {
         if (!StringUtils.hasText(request.getBase64Content())
                 || !StringUtils.hasText(request.getContentType())
                 || !isSupportedSignatureContentType(request.getContentType())) {
-            throw new IllegalArgumentException("Debe seleccionar un archivo de firma válido");
+            throw new IllegalArgumentException("Debe seleccionar un archivo de firma valido.");
         }
 
         try {
@@ -325,10 +309,25 @@ public class FinancialStatementRestMapper {
                     .fileName(request.getFileName())
                     .contentType("image/png")
                     .content(normalizeSignatureContent(request.getBase64Content().trim()))
+                    .signerName(normalizeRequiredSignatureText(
+                            request.getSignerName(),
+                            "El nombre de la persona firmante es obligatorio."
+                    ))
+                    .signerRole(normalizeRequiredSignatureText(
+                            request.getSignerRole(),
+                            "El cargo de la persona firmante es obligatorio."
+                    ))
                     .build();
         } catch (IllegalArgumentException exception) {
             throw exception;
         }
+    }
+
+    private String normalizeRequiredSignatureText(String value, String message) {
+        if (!StringUtils.hasText(value)) {
+            throw new IllegalArgumentException(message);
+        }
+        return value.trim();
     }
 
     private boolean isSupportedSignatureContentType(String contentType) {
@@ -343,7 +342,7 @@ public class FinancialStatementRestMapper {
         try {
             decodedContent = Base64.getDecoder().decode(base64Content);
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Debe seleccionar un archivo de firma válido", exception);
+            throw new IllegalArgumentException("Debe seleccionar un archivo de firma valido.", exception);
         }
 
         try (
@@ -352,12 +351,12 @@ public class FinancialStatementRestMapper {
         ) {
             BufferedImage image = ImageIO.read(inputStream);
             if (image == null || !ImageIO.write(image, "png", outputStream)) {
-                throw new IllegalArgumentException("Debe seleccionar un archivo de firma válido");
+                throw new IllegalArgumentException("Debe seleccionar un archivo de firma valido.");
             }
             return outputStream.toByteArray();
         } catch (IOException exception) {
             throw new FinancialStatementSignatureException(
-                    "Error al aplicar la firma. Puede intentar de nuevo o exportar sin firma",
+                    "Error al aplicar la firma. Puede intentar de nuevo o exportar sin firma.",
                     exception
             );
         }

@@ -38,7 +38,7 @@ public class FinancialStatementSnapshotMapper {
         try {
             return objectMapper.writeValueAsString(snapshot);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Error serializing financial statement snapshot.", exception);
+            throw new IllegalStateException("No fue posible serializar el snapshot del estado financiero.", exception);
         }
     }
 

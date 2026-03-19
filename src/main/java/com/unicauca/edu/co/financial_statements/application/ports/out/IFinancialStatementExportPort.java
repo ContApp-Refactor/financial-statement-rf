@@ -35,7 +35,7 @@ public interface IFinancialStatementExportPort {
             Map<String, Object> financialStatement,
             FinancialStatementExportStyle exportStyle,
             List<String> annotationTexts,
-            FinancialStatementVisualSignature visualSignature
+            List<FinancialStatementVisualSignature> visualSignatures
     ) {
         return export(format, reportName, enterpriseName, rows, financialStatement, exportStyle);
     }

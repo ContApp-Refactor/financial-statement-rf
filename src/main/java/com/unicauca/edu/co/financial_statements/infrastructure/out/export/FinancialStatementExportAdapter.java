@@ -58,7 +58,7 @@ public class FinancialStatementExportAdapter implements IFinancialStatementExpor
             Map<String, Object> financialStatement,
             FinancialStatementExportStyle exportStyle,
             List<String> annotationTexts,
-            FinancialStatementVisualSignature visualSignature
+            List<FinancialStatementVisualSignature> visualSignatures
     ) {
         FinancialStatementExportService.ExportedFile exportedFile = financialStatementExportService.export(
                 format,
@@ -76,7 +76,7 @@ public class FinancialStatementExportAdapter implements IFinancialStatementExpor
                 )
                         : null,
                 annotationTexts,
-                visualSignature
+                visualSignatures
         );
 
         return new ExportedDocument(

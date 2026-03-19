@@ -75,7 +75,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
     private String getRequiredClaimAsString(Jwt jwt, String claimName) {
         String value = jwt.getClaimAsString(claimName);
         if (!StringUtils.hasText(value)) {
-            throw new IllegalArgumentException("JWT claim '" + claimName + "' is required.");
+            throw new IllegalArgumentException("El claim JWT '" + claimName + "' es obligatorio.");
         }
         return value;
     }

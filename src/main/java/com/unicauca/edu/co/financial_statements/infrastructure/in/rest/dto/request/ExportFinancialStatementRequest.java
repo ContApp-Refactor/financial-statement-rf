@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,6 +22,10 @@ public class ExportFinancialStatementRequest {
     private Map<String, Object> financialStatement;
     private List<Map<String, Object>> financialStatementData;
     private List<UpsertFinancialStatementAnnotationRequest> annotations;
+    @Valid
     private VisualSignatureRequest signature;
+    @Valid
+    @Size(max = 2, message = "Solo se permiten hasta 2 firmas.")
+    private List<VisualSignatureRequest> signatures;
     private InfoReportTemplateRequest infoReportTemplate;
 }

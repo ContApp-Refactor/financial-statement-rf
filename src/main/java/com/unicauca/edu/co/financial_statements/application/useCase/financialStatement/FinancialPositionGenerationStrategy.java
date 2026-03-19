@@ -39,12 +39,6 @@ public class FinancialPositionGenerationStrategy implements FinancialStatementGe
         List<AccountingEntry> sourceEntries = accountingInfoClient.findAccountingEntries(request.getEntId(), null, currentCutoffDate);
         List<AccountingEntry> filteredSourceEntries = generationSupport.applyCriteriaLevelFilter(sourceEntries, criteria, true);
 
-        generationSupport.validateCutoffDatesAgainstLatestMovement(
-                filteredSourceEntries,
-                currentCutoffDate,
-                previousCutoffDate
-        );
-
         List<AccountingEntry> currentAccountingEntries =
                 generationSupport.filterEntriesUpToCutoff(filteredSourceEntries, currentCutoffDate);
         List<AccountingEntry> previousAccountingEntries =
@@ -63,14 +57,14 @@ public class FinancialPositionGenerationStrategy implements FinancialStatementGe
                 result.totalLiabilities(),
                 result.totalEquity(),
                 currentCutoffDate,
-                "current"
+                "actual"
         );
         generationSupport.validateBalancedFinancialPosition(
                 result.previousTotalAssets(),
                 result.previousTotalLiabilities(),
                 result.previousTotalEquity(),
                 previousCutoffDate,
-                "previous"
+                "anterior"
         );
 
         return FinancialStatementDataPayload.builder()

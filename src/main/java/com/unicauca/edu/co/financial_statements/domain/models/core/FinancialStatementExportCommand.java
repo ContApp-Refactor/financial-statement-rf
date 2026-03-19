@@ -21,6 +21,6 @@ public class FinancialStatementExportCommand {
     private Map<String, Object> financialStatement;
     private List<FinancialStatementRow> financialStatementData;
     private List<FinancialStatementAnnotation> annotations;
-    private FinancialStatementVisualSignature visualSignature;
+    private List<FinancialStatementVisualSignature> visualSignatures;
     private FinancialStatementExportStyle exportStyle;
 }

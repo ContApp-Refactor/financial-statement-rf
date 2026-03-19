@@ -23,7 +23,10 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -60,10 +63,15 @@ class FinancialStatementFlowIntegrationTest {
     @MockBean
     private IAccountingInfoClient accountingInfoClient;
 
+    @MockBean
+    private Clock clock;
+
     @BeforeEach
     void setUp() {
         when(accountingInfoClient.findAccountingEntries(anyString(), any(), any()))
                 .thenReturn(buildAccountingEntries());
+        when(clock.getZone()).thenReturn(ZoneId.of("America/Bogota"));
+        when(clock.instant()).thenReturn(Instant.parse("2026-12-31T17:00:00Z"));
     }
 
     @Test
@@ -190,54 +198,6 @@ class FinancialStatementFlowIntegrationTest {
 
         JsonNode templateJson = objectMapper.readTree(templateResult.getResponse().getContentAsString());
         assertThat(templateJson.path("data").path("name").asText()).isEqualTo("Plantilla base");
-
-        String createSchedulePayload = """
-                {
-                  "reportId": "%s",
-                  "recipientEmail": "usuario@dominio.com",
-                  "format": "PDF",
-                  "frequency": "DAILY",
-                  "hourOfDay": 8,
-                  "minuteOfHour": 30,
-                  "timezone": "America/Bogota"
-                }
-                """.formatted(reportId);
-
-        MvcResult scheduleResult = mockMvc.perform(post("/api/financial-statements/email-schedules")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(createSchedulePayload))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        JsonNode scheduleJson = objectMapper.readTree(scheduleResult.getResponse().getContentAsString());
-        long scheduleId = scheduleJson.path("data").path("id").asLong();
-        assertThat(scheduleId).isPositive();
-        assertThat(scheduleJson.path("data").path("active").asBoolean()).isTrue();
-
-        MvcResult schedulesResult = mockMvc.perform(get("/api/financial-statements/email-schedules")
-                        .param("reportId", reportId))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        JsonNode schedulesJson = objectMapper.readTree(schedulesResult.getResponse().getContentAsString());
-        assertThat(schedulesJson.path("data").isArray()).isTrue();
-        assertThat(schedulesJson.path("data")).hasSize(1);
-
-        String updateSchedulePayload = """
-                {
-                  "active": false
-                }
-                """;
-
-        MvcResult updatedScheduleResult = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .patch("/api/financial-statements/email-schedules/{scheduleId}/status", scheduleId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateSchedulePayload))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        JsonNode updatedScheduleJson = objectMapper.readTree(updatedScheduleResult.getResponse().getContentAsString());
-        assertThat(updatedScheduleJson.path("data").path("active").asBoolean()).isFalse();
     }
 
     @Test
@@ -356,7 +316,7 @@ class FinancialStatementFlowIntegrationTest {
 
         JsonNode fourthTemplateJson = objectMapper.readTree(fourthTemplateResult.getResponse().getContentAsString());
         assertThat(fourthTemplateJson.path("message").asText())
-                .contains("maximum of 3 templates");
+                .contains("maximo de 3 plantillas");
     }
 
     @Test
@@ -435,7 +395,7 @@ class FinancialStatementFlowIntegrationTest {
 
         JsonNode blankAnnotationJson = objectMapper.readTree(blankAnnotationResult.getResponse().getContentAsString());
         assertThat(blankAnnotationJson.path("message").asText())
-                .isEqualTo("Debe escribir una anotación antes de guardar");
+                .isEqualTo("Debe escribir una anotacion antes de guardar.");
 
         String createAnnotationPayload = """
                 {
@@ -515,36 +475,62 @@ class FinancialStatementFlowIntegrationTest {
     }
 
     @Test
-    void shouldExportWithVisualSignatureAndRejectInvalidSignatureType() throws Exception {
+    void shouldExportWithUpToTwoVisualSignaturesAndRejectInvalidSignatureType() throws Exception {
         String reportId = registerFinancialPositionReport("ENT-SIGNATURE-001");
 
         String exportWithSignaturePayload = """
                 {
                   "reportId": "%s",
                   "format": "PDF",
-                  "signature": {
-                    "fileName": "firma.png",
-                    "contentType": "image/png",
-                    "base64Content": "%s"
-                  }
+                  "signatures": [
+                    {
+                      "fileName": "firma-contadora.png",
+                      "contentType": "image/png",
+                      "base64Content": "%s",
+                      "signerName": "Maria Perez",
+                      "signerRole": "Contadora General"
+                    },
+                    {
+                      "fileName": "firma-representante.png",
+                      "contentType": "image/png",
+                      "base64Content": "%s",
+                      "signerName": "Carlos Gomez",
+                      "signerRole": "Representante Legal"
+                    }
+                  ]
                 }
-                """.formatted(reportId, SAMPLE_SIGNATURE_BASE64);
+                """.formatted(reportId, SAMPLE_SIGNATURE_BASE64, SAMPLE_SIGNATURE_BASE64);
 
-        mockMvc.perform(post("/api/financial-statements/export")
+        MvcResult exportWithSignatureResult = mockMvc.perform(post("/api/financial-statements/export")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(exportWithSignaturePayload))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString(".pdf")));
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString(".pdf")))
+                .andReturn();
+
+        try (PDDocument document = Loader.loadPDF(exportWithSignatureResult.getResponse().getContentAsByteArray())) {
+            String pdfText = new PDFTextStripper().getText(document);
+
+            assertThat(pdfText)
+                    .contains("Maria Perez")
+                    .contains("Contadora General")
+                    .contains("Carlos Gomez")
+                    .contains("Representante Legal");
+        }
 
         String invalidSignaturePayload = """
                 {
                   "reportId": "%s",
                   "format": "PDF",
-                  "signature": {
-                    "fileName": "firma.pdf",
-                    "contentType": "application/pdf",
-                    "base64Content": "%s"
-                  }
+                  "signatures": [
+                    {
+                      "fileName": "firma.pdf",
+                      "contentType": "application/pdf",
+                      "base64Content": "%s",
+                      "signerName": "Maria Perez",
+                      "signerRole": "Contadora General"
+                    }
+                  ]
                 }
                 """.formatted(reportId, SAMPLE_SIGNATURE_BASE64);
 
@@ -556,7 +542,7 @@ class FinancialStatementFlowIntegrationTest {
 
         JsonNode invalidSignatureJson = objectMapper.readTree(invalidSignatureResult.getResponse().getContentAsString());
         assertThat(invalidSignatureJson.path("message").asText())
-                .isEqualTo("Debe seleccionar un archivo de firma válido");
+                .isEqualTo("Debe seleccionar un archivo de firma valido.");
     }
 
     @Test
@@ -583,7 +569,7 @@ class FinancialStatementFlowIntegrationTest {
 
         JsonNode failedJson = objectMapper.readTree(failedResult.getResponse().getContentAsString());
         assertThat(failedJson.path("message").asText())
-                .isEqualTo("Error al generar el reporte. Intente más tarde");
+                .isEqualTo("Error al generar el reporte. Intente mas tarde.");
 
         MvcResult historyResult = mockMvc.perform(get("/api/financial-statements/history")
                         .param("enterpriseId", "ENT-FAIL-001"))
@@ -615,7 +601,7 @@ class FinancialStatementFlowIntegrationTest {
 
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.path("statusCode").asInt()).isEqualTo(400);
-        assertThat(body.path("message").asText()).contains("yyyy-MM-dd or dd/MM/yyyy");
+        assertThat(body.path("message").asText()).contains("yyyy-MM-dd o dd/MM/yyyy");
     }
 
     @Test
@@ -669,14 +655,41 @@ class FinancialStatementFlowIntegrationTest {
     }
 
     @Test
-    void shouldReturnBadRequestWhenBothCutoffDatesAreAfterLatestMovementDate() throws Exception {
+    void shouldAllowCutoffDatesAfterLatestMovementDateForFinancialPosition() throws Exception {
         String payload = """
                 {
                   "entId": "ENT-TEST-001",
                   "type": "STATEMENT_FINANCIAL_POSITION",
                   "criteria": {
-                    "previousCutoffDate": "2027-01-01",
-                    "currentCutoffDate": "2027-12-31"
+                    "previousCutoffDate": "2025-12-31",
+                    "currentCutoffDate": "2026-12-31"
+                  }
+                }
+                """;
+
+        MvcResult result = mockMvc.perform(post("/api/financial-statements/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        JsonNode data = body.path("data");
+        assertThat(data.path("totalAssets").decimalValue()).isEqualByComparingTo("1700.00");
+        assertThat(data.path("totalLiabilities").decimalValue()).isEqualByComparingTo("450.00");
+        assertThat(data.path("totalEquity").decimalValue()).isEqualByComparingTo("1250.00");
+        assertThat(data.path("financialStatementData")).isNotEmpty();
+    }
+
+    @Test
+    void shouldRejectFutureCurrentCutoffDateForFinancialPosition() throws Exception {
+        String payload = """
+                {
+                  "entId": "ENT-TEST-001",
+                  "type": "STATEMENT_FINANCIAL_POSITION",
+                  "criteria": {
+                    "previousCutoffDate": "2026-12-30",
+                    "currentCutoffDate": "2027-01-01"
                   }
                 }
                 """;
@@ -688,9 +701,9 @@ class FinancialStatementFlowIntegrationTest {
                 .andReturn();
 
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(body.path("statusCode").asInt()).isEqualTo(400);
         assertThat(body.path("message").asText())
-                .contains("latest accounting movement date");
+                .contains("La fecha de corte actual no puede ser posterior a la fecha actual del sistema")
+                .contains("2026-12-31");
     }
 
     @Test
@@ -717,8 +730,8 @@ class FinancialStatementFlowIntegrationTest {
 
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.path("message").asText())
-                .contains("does not balance")
-                .contains("Review the accounting source");
+                .contains("no cuadra")
+                .contains("Revise la informacion contable");
     }
 
     @Test

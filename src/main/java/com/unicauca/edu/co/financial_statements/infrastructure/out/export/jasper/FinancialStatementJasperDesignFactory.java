@@ -1,6 +1,7 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.out.export.jasper;
 
 import com.unicauca.edu.co.financial_statements.infrastructure.out.export.FinancialStatementExportService;
+import com.unicauca.edu.co.financial_statements.infrastructure.out.export.FinancialStatementSignatureBlock;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.export.FinancialStatementTableModel;
 import lombok.RequiredArgsConstructor;
 import net.sf.jasperreports.engine.JRException;
@@ -53,7 +54,12 @@ public class FinancialStatementJasperDesignFactory {
             addField(design, "column" + index);
         }
         addField(design, "rowType");
-        addParameter(design, "SIGNATURE_IMAGE", Image.class);
+        addParameter(design, "SIGNATURE_IMAGE_1", Image.class);
+        addParameter(design, "SIGNATURE_NAME_1", String.class);
+        addParameter(design, "SIGNATURE_ROLE_1", String.class);
+        addParameter(design, "SIGNATURE_IMAGE_2", Image.class);
+        addParameter(design, "SIGNATURE_NAME_2", String.class);
+        addParameter(design, "SIGNATURE_ROLE_2", String.class);
 
         float baseFontSize = styleResolver.resolveFontSize(exportStyle, 9f);
         String fontName = styleResolver.resolveFontName(exportStyle);
@@ -100,7 +106,7 @@ public class FinancialStatementJasperDesignFactory {
 
         design.setColumnHeader(createColumnHeaderBand(model.columns(), headerStyle));
         ((JRDesignSection) design.getDetailSection()).addBand(createDetailBand(columnCount, textStyle, numericStyle));
-        design.setSummary(createSummaryBand(design, model.signatureImage(), textStyle));
+        design.setSummary(createSummaryBand(design, model.signatures(), textStyle));
 
         return design;
     }
@@ -111,7 +117,7 @@ public class FinancialStatementJasperDesignFactory {
                 .getInputStream()) {
             return JRXmlLoader.load(inputStream);
         } catch (IOException exception) {
-            throw new IllegalStateException("Unable to load Jasper base template.", exception);
+            throw new IllegalStateException("No fue posible cargar la plantilla base de Jasper.", exception);
         }
     }
 
@@ -327,37 +333,78 @@ public class FinancialStatementJasperDesignFactory {
 
     private JRDesignBand createSummaryBand(
             JasperDesign design,
-            byte[] signatureImage,
+            List<FinancialStatementSignatureBlock> signatures,
             JRDesignStyle textStyle
     ) throws JRException {
         JRDesignBand band = new JRDesignBand();
-        if (signatureImage == null || signatureImage.length == 0) {
+        List<FinancialStatementSignatureBlock> availableSignatures = signatures != null
+                ? signatures.stream()
+                .filter(signature -> signature != null && signature.image() != null && signature.image().length > 0)
+                .limit(2)
+                .toList()
+                : List.of();
+        if (availableSignatures.isEmpty()) {
             band.setHeight(0);
             return band;
         }
 
-        band.setHeight(120);
+        band.setHeight(160);
         band.setSplitType(SplitTypeEnum.STRETCH);
 
-        JRDesignStaticText label = new JRDesignStaticText();
-        label.setX(0);
-        label.setY(10);
-        label.setWidth(140);
-        label.setHeight(20);
-        label.setText("Firma");
-        label.setStyle(textStyle);
-        band.addElement(label);
+        int blockWidth = 240;
+        int gap = 40;
+        int startX = availableSignatures.size() == 1
+                ? (DESIGN_WIDTH - blockWidth) / 2
+                : (DESIGN_WIDTH - ((blockWidth * 2) + gap)) / 2;
 
+        addSignatureBlock(band, design, textStyle, 1, startX, blockWidth);
+        if (availableSignatures.size() > 1) {
+            addSignatureBlock(band, design, textStyle, 2, startX + blockWidth + gap, blockWidth);
+        }
+
+        return band;
+    }
+
+    private void addSignatureBlock(
+            JRDesignBand band,
+            JasperDesign design,
+            JRDesignStyle textStyle,
+            int signatureIndex,
+            int x,
+            int blockWidth
+    ) throws JRException {
         JRDesignImage image = new JRDesignImage(design);
-        image.setX(0);
-        image.setY(35);
+        image.setX(x + ((blockWidth - 180) / 2));
+        image.setY(10);
         image.setWidth(180);
         image.setHeight(70);
         image.setUsingCache(false);
         image.setScaleImage(ScaleImageEnum.RETAIN_SHAPE);
-        image.setExpression(expression("$P{SIGNATURE_IMAGE}"));
+        image.setExpression(expression("$P{SIGNATURE_IMAGE_" + signatureIndex + "}"));
         band.addElement(image);
 
-        return band;
+        JRDesignTextField nameField = textField(
+                "$P{SIGNATURE_NAME_" + signatureIndex + "}",
+                x,
+                95,
+                blockWidth,
+                18,
+                textStyle
+        );
+        nameField.setBlankWhenNull(true);
+        nameField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
+        band.addElement(nameField);
+
+        JRDesignTextField roleField = textField(
+                "$P{SIGNATURE_ROLE_" + signatureIndex + "}",
+                x,
+                117,
+                blockWidth,
+                18,
+                textStyle
+        );
+        roleField.setBlankWhenNull(true);
+        roleField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
+        band.addElement(roleField);
     }
 }

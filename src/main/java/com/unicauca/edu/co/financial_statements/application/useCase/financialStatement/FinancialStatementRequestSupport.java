@@ -4,14 +4,19 @@ import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStat
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementCriteriaRange;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementRequest;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EFinancialStatementType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Locale;
 
 @Component
+@RequiredArgsConstructor
 public class FinancialStatementRequestSupport {
+
+    private final Clock clock;
 
     public FinancialStatementRequest normalizeRequest(FinancialStatementRequest request) {
         if (request == null) {
@@ -27,20 +32,20 @@ public class FinancialStatementRequestSupport {
 
     public void validateRequest(FinancialStatementRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("The request cannot be null.");
+            throw new IllegalArgumentException("La solicitud no puede ser nula.");
         }
 
         if (!StringUtils.hasText(request.getEntId())) {
-            throw new IllegalArgumentException("entId is required.");
+            throw new IllegalArgumentException("El entId es obligatorio.");
         }
 
         if (request.getType() == null) {
-            throw new IllegalArgumentException("type is required.");
+            throw new IllegalArgumentException("El tipo de reporte es obligatorio.");
         }
 
         FinancialStatementCriteria criteria = request.getCriteria();
         if (criteria == null) {
-            throw new IllegalArgumentException("criteria is required.");
+            throw new IllegalArgumentException("Los criterios del reporte son obligatorios.");
         }
 
         LocalDate startDate = criteria.getStartDate();
@@ -54,30 +59,46 @@ public class FinancialStatementRequestSupport {
 
         if (request.getType() == EFinancialStatementType.STATEMENT_FINANCIAL_POSITION) {
             if (currentCutoffDate == null || previousCutoffDate == null) {
-                throw new IllegalArgumentException("currentCutoffDate and previousCutoffDate are required for statement financial position.");
+                throw new IllegalArgumentException(
+                        "Las fechas de corte actual y anterior son obligatorias para el estado de situacion financiera."
+                );
             }
+            validateCurrentCutoffDateNotInFuture(currentCutoffDate);
             if (previousCutoffDate.isAfter(currentCutoffDate)) {
-                throw new IllegalArgumentException("previousCutoffDate cannot be after currentCutoffDate.");
+                throw new IllegalArgumentException(
+                        "La fecha de corte anterior no puede ser posterior a la fecha de corte actual."
+                );
             }
         } else if (request.getType() == EFinancialStatementType.INCOME_STATEMENT) {
             LocalDate previousStartDate = criteria.getPreviousStartDate();
             LocalDate previousEndDate = criteria.getPreviousEndDate();
 
             if (startDate == null || endDate == null || previousStartDate == null || previousEndDate == null) {
-                throw new IllegalArgumentException("Current and previous period dates are required for income statement.");
+                throw new IllegalArgumentException(
+                    "Las fechas del periodo actual y del periodo anterior son obligatorias para el estado de resultados."
+                );
             }
+        } else if (request.getType() == EFinancialStatementType.STATEMENT_CHANGES_EQUITY) {
+            if (currentCutoffDate == null || previousCutoffDate == null) {
+                throw new IllegalArgumentException(
+                        "Las fechas de corte actual y anterior son obligatorias para el estado de cambios en el patrimonio."
+                );
+            }
+            validateCurrentCutoffDateNotInFuture(currentCutoffDate);
         } else if (startDate == null || endDate == null) {
-            throw new IllegalArgumentException("startDate and endDate are required for this report type.");
+            throw new IllegalArgumentException("Las fechas de inicio y fin son obligatorias para este tipo de reporte.");
         }
 
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("startDate cannot be after endDate.");
+            throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin.");
         }
 
         if (criteria.getPreviousStartDate() != null
                 && criteria.getPreviousEndDate() != null
                 && criteria.getPreviousStartDate().isAfter(criteria.getPreviousEndDate())) {
-            throw new IllegalArgumentException("previousStartDate cannot be after previousEndDate.");
+            throw new IllegalArgumentException(
+                    "La fecha de inicio del periodo anterior no puede ser posterior a la fecha de fin del periodo anterior."
+            );
         }
 
         FinancialStatementCriteriaRange criteriaRange = criteria.getCriteriaRange();
@@ -85,7 +106,9 @@ public class FinancialStatementRequestSupport {
                 && criteriaRange.getFrom() != null
                 && criteriaRange.getTo() != null
                 && criteriaRange.getFrom() > criteriaRange.getTo()) {
-            throw new IllegalArgumentException("criteriaRange.from cannot be greater than criteriaRange.to.");
+            throw new IllegalArgumentException(
+                    "El rango de criterios es invalido: el valor inicial no puede ser mayor que el valor final."
+            );
         }
     }
 
@@ -163,5 +186,21 @@ public class FinancialStatementRequestSupport {
 
     private <T> T firstNonNull(T primaryValue, T fallbackValue) {
         return primaryValue != null ? primaryValue : fallbackValue;
+    }
+
+    /**
+     * La fecha de corte actual nunca puede adelantarse al reloj real del sistema.
+     */
+    private void validateCurrentCutoffDateNotInFuture(LocalDate currentCutoffDate) {
+        if (currentCutoffDate == null) {
+            return;
+        }
+
+        LocalDate today = LocalDate.now(clock);
+        if (currentCutoffDate.isAfter(today)) {
+            throw new IllegalArgumentException(
+                    "La fecha de corte actual no puede ser posterior a la fecha actual del sistema (" + today + ")."
+            );
+        }
     }
 }

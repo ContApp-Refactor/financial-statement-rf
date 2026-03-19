@@ -62,33 +62,6 @@ public class FinancialStatementGenerationSupport {
                 .toList();
     }
 
-    public void validateCutoffDatesAgainstLatestMovement(
-            List<AccountingEntry> entries,
-            LocalDate currentCutoffDate,
-            LocalDate previousCutoffDate
-    ) {
-        if (entries == null || entries.isEmpty()) {
-            return;
-        }
-
-        LocalDate latestMovementDate = entries.stream()
-                .map(AccountingEntry::getDate)
-                .filter(Objects::nonNull)
-                .max(LocalDate::compareTo)
-                .orElse(null);
-
-        if (latestMovementDate != null
-                && previousCutoffDate != null
-                && currentCutoffDate != null
-                && previousCutoffDate.isAfter(latestMovementDate)
-                && currentCutoffDate.isAfter(latestMovementDate)) {
-            throw new IllegalArgumentException(
-                    "Selected cutoff dates are after the latest accounting movement date (" + latestMovementDate
-                            + "). Choose cutoff dates up to " + latestMovementDate + "."
-            );
-        }
-    }
-
     public void validateBalancedFinancialPosition(
             BigDecimal totalAssets,
             BigDecimal totalLiabilities,
@@ -102,14 +75,15 @@ public class FinancialStatementGenerationSupport {
         BigDecimal difference = scaleAmount(assets.subtract(liabilities.add(equity)));
 
         if (difference.compareTo(BigDecimal.ZERO) != 0) {
-            String resolvedCutoff = cutoffDate != null ? cutoffDate.toString() : "without cutoff date";
+            String resolvedCutoff = cutoffDate != null ? cutoffDate.toString() : "sin fecha de corte";
             throw new IllegalArgumentException(
-                    "The " + periodLabel + " financial position does not balance at cutoff " + resolvedCutoff
-                            + ". Assets=" + assets
-                            + ", liabilities=" + liabilities
-                            + ", equity=" + equity
-                            + ", difference=" + difference
-                            + ". Review the accounting source before generating the report."
+                    "El estado de situacion financiera del periodo " + periodLabel
+                            + " no cuadra en la fecha de corte " + resolvedCutoff
+                            + ". Activos=" + assets
+                            + ", pasivos=" + liabilities
+                            + ", patrimonio=" + equity
+                            + ", diferencia=" + difference
+                            + ". Revise la informacion contable antes de generar el reporte."
             );
         }
     }

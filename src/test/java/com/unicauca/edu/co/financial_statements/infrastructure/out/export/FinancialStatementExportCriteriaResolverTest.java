@@ -61,6 +61,25 @@ class FinancialStatementExportCriteriaResolverTest {
     }
 
     @Test
+    void shouldUseDefaultLevelLabelWhenCriteriaTypeIsMissing() {
+        Map<String, Object> financialStatement = new LinkedHashMap<>();
+        financialStatement.put("type", "STATEMENT_FINANCIAL_POSITION");
+        financialStatement.put("criteria", Map.of(
+                "currentCutoffDate", "2025-03-29",
+                "previousCutoffDate", "2024-03-29"
+        ));
+
+        List<ReportCriterion> criteria = resolver.resolveCriteria(financialStatement);
+
+        assertThat(criteria)
+                .containsExactly(
+                        new ReportCriterion("Tipo de Nivel", "Estructura predeterminada"),
+                        new ReportCriterion("Fecha de Corte Anterior", "29/03/2024"),
+                        new ReportCriterion("Fecha de Corte Actual", "29/03/2025")
+                );
+    }
+
+    @Test
     void shouldExtractYearFromIsoDateOrReturnNullForMissingValue() {
         Map<String, Object> financialStatement = new LinkedHashMap<>();
         financialStatement.put("criteria", Map.of(

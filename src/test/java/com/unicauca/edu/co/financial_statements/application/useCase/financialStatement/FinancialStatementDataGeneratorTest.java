@@ -49,6 +49,6 @@ class FinancialStatementDataGeneratorTest {
 
         assertThatThrownBy(() -> dataGenerator.generate(request))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("request type is required");
+                .hasMessageContaining("tipo de reporte");
     }
 }

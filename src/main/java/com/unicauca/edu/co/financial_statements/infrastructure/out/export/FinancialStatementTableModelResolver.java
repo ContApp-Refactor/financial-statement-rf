@@ -14,6 +14,6 @@ public interface FinancialStatementTableModelResolver {
             List<FinancialStatementRow> typedRows,
             Map<String, Object> financialStatement,
             List<String> annotationTexts,
-            byte[] signatureImage
+            List<FinancialStatementSignatureBlock> signatures
     );
 }

@@ -24,10 +24,6 @@ spring:
           issuer-uri: http://localhost:8090/auth/realms/oauth2-realm
           jwk-set-uri: http://localhost:8090/auth/realms/oauth2-realm/protocol/openid-connect/certs
 
-  mail:
-    host: ""
-    port: 25
-
   cloud:
     discovery:
       enabled: false
@@ -47,26 +43,12 @@ jwt:
       principle-attribute: preferred_username
       resource-id: microservices_client
 
-mail:
-  provider: smtp
-  from: no-reply@contapp.local
-  resend:
-    api-key: ""
-    reply-to: ""
-
 services:
   account-info-service:
     base-url: https://bef02d1f-e3aa-47bc-a9e9-ab242f8696d0.mock.pstmn.io/accountInfo
     bearer-token: ${ACCOUNT_INFO_SERVICE_BEARER_TOKEN:}
     mock-mode-enabled: ${ACCOUNT_INFO_SERVICE_MOCK_MODE_ENABLED:false}
     accept-legacy-date-format: ${ACCOUNT_INFO_SERVICE_ACCEPT_LEGACY_DATE_FORMAT:false}
-
-report-email:
-  scheduler:
-    fixed-delay-ms: 60000
-    default-timezone: America/Bogota
-    claim-lease-ms: 300000
-    failure-retry-delay-ms: 300000
 
 management:
   endpoints:

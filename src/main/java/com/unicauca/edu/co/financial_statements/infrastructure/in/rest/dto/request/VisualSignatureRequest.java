@@ -13,4 +13,6 @@ public class VisualSignatureRequest {
     private String fileName;
     private String contentType;
     private String base64Content;
+    private String signerName;
+    private String signerRole;
 }
