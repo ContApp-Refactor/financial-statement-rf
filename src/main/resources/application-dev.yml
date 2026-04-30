@@ -77,5 +77,5 @@ services:
   account-info-service:
     base-url: ${ACCOUNT_INFO_SERVICE_URL:https://bef02d1f-e3aa-47bc-a9e9-ab242f8696d0.mock.pstmn.io/accountInfo}
     bearer-token: ${ACCOUNT_INFO_SERVICE_BEARER_TOKEN:}
-    mock-mode-enabled: ${ACCOUNT_INFO_SERVICE_MOCK_MODE_ENABLED:false}
+    mock-mode-enabled: ${ACCOUNT_INFO_SERVICE_MOCK_MODE_ENABLED:true}
     accept-legacy-date-format: ${ACCOUNT_INFO_SERVICE_ACCEPT_LEGACY_DATE_FORMAT:true}
