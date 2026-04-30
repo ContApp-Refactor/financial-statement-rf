@@ -53,8 +53,8 @@ public class AccountInfoClient implements IAccountingInfoClient {
             AccountInfoClientProperties properties
     ) {
         this.restTemplate = restTemplateBuilder
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(20))
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(20))
                 .build();
         this.properties = properties;
         log.debug(
@@ -141,7 +141,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
 
     private boolean shouldUseMockFallback(String entId, LocalDate startDate, LocalDate endDate) {
         return properties.isMockModeEnabled()
-                && isLocalJsonServerMock()
+                && isSupportedMockEndpoint()
                 && (StringUtils.hasText(entId) || startDate != null || endDate != null);
     }
 
@@ -166,7 +166,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
             return List.of();
         }
 
-        AccountInfoMovementResponse[] sourceEntries = adaptLocalMockEntries(body, entId);
+        AccountInfoMovementResponse[] sourceEntries = adaptMockEntries(body, entId);
 
         return Arrays.stream(sourceEntries)
                 .filter(Objects::nonNull)
@@ -177,16 +177,16 @@ public class AccountInfoClient implements IAccountingInfoClient {
                 .toList();
     }
 
-    private AccountInfoMovementResponse[] adaptLocalMockEntries(
+    private AccountInfoMovementResponse[] adaptMockEntries(
             AccountInfoMovementResponse[] body,
             String requestedEntId
     ) {
-        if (!shouldAdaptLocalMockEntries(body, requestedEntId)) {
+        if (!shouldAdaptMockEntries(body, requestedEntId)) {
             return body;
         }
 
         log.warn(
-                "The local accounting mock dataset does not contain enterprise {}. Reusing the demo data for that enterprise because mock mode is enabled.",
+                "The accounting mock dataset does not contain enterprise {}. Reusing the demo data for that enterprise because mock mode is enabled.",
                 requestedEntId
         );
 
@@ -195,9 +195,9 @@ public class AccountInfoClient implements IAccountingInfoClient {
                 .toArray(AccountInfoMovementResponse[]::new);
     }
 
-    private boolean shouldAdaptLocalMockEntries(AccountInfoMovementResponse[] body, String requestedEntId) {
+    private boolean shouldAdaptMockEntries(AccountInfoMovementResponse[] body, String requestedEntId) {
         if (!properties.isMockModeEnabled()
-                || !isLocalJsonServerMock()
+                || !isSupportedMockEndpoint()
                 || !StringUtils.hasText(requestedEntId)
                 || body == null
                 || body.length == 0) {
@@ -205,21 +205,31 @@ public class AccountInfoClient implements IAccountingInfoClient {
         }
 
         return Arrays.stream(body)
+                .filter(Objects::nonNull)
                 .map(AccountInfoMovementResponse::getEntId)
                 .filter(StringUtils::hasText)
                 .noneMatch(requestedEntId::equalsIgnoreCase);
     }
 
-    private boolean isLocalJsonServerMock() {
+    private boolean isSupportedMockEndpoint() {
         try {
             URI uri = URI.create(properties.getBaseUrl());
             String host = uri.getHost();
             int port = uri.getPort();
 
-            return port == 4001 && ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host));
+            return isLocalJsonServerMock(host, port) || isPostmanHostedMock(host);
         } catch (Exception exception) {
             return false;
         }
+    }
+
+    private boolean isLocalJsonServerMock(String host, int port) {
+        return port == 4001 && ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host));
+    }
+
+    private boolean isPostmanHostedMock(String host) {
+        return StringUtils.hasText(host)
+                && host.trim().toLowerCase(Locale.ROOT).endsWith(".mock.pstmn.io");
     }
 
     private AccountInfoMovementResponse cloneWithEntId(AccountInfoMovementResponse source, String requestedEntId) {
