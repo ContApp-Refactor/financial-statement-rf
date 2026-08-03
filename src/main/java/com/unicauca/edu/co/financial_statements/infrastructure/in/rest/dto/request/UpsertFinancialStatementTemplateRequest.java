@@ -14,10 +14,10 @@ public class UpsertFinancialStatementTemplateRequest {
 
     private Long id;
 
-    @NotBlank(message = "enterpriseId is required")
+    @NotBlank(message = "El enterpriseId es obligatorio.")
     private String enterpriseId;
 
-    @NotBlank(message = "name is required")
+    @NotBlank(message = "El nombre de la plantilla es obligatorio.")
     private String name;
 
     private String pathLogotype;

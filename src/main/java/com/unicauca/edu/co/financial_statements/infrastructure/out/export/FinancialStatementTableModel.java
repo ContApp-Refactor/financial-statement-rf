@@ -9,6 +9,7 @@ public record FinancialStatementTableModel(
         String generatedAt,
         String criteriaText,
         List<String> columns,
-        List<Map<String, Object>> rows
+        List<Map<String, Object>> rows,
+        List<FinancialStatementSignatureBlock> signatures
 ) {
 }

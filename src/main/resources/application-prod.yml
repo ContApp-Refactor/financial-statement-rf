@@ -1,0 +1,96 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/financial_statement}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_HIBERNATE_DDL_AUTO:validate}
+    show-sql: ${DB_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: ${DB_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        default_schema: ${DB_SCHEMA:public}
+    open-in-view: false
+
+  flyway:
+    enabled: ${DB_FLYWAY_ENABLED:true}
+    baseline-on-migrate: ${DB_FLYWAY_BASELINE_ON_MIGRATE:true}
+    default-schema: ${DB_SCHEMA:public}
+    schemas: ${DB_SCHEMA:public}
+    locations: classpath:db/migration
+
+  h2:
+    console:
+      enabled: false
+
+  cloud:
+    discovery:
+      enabled: ${SPRING_CLOUD_DISCOVERY_ENABLED:true}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8090/auth/realms/oauth2-realm}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8090/auth/realms/oauth2-realm/protocol/openid-connect/certs}
+
+server:
+  port: ${PORT:8081}
+  error:
+    include-stacktrace: never
+
+eureka:
+  instance:
+    instance-id: "${spring.application.name}:${random.uuid}"
+  client:
+    enabled: ${EUREKA_ENABLED:true}
+    register-with-eureka: ${EUREKA_REGISTER:true}
+    fetch-registry: ${EUREKA_FETCH:true}
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+
+jwt:
+  auth:
+    converter:
+      principle-attribute: ${JWT_PRINCIPAL_ATTR:preferred_username}
+      resource-id: ${JWT_RESOURCE_ID:microservices_client}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://contapp.example.com}
+
+security:
+  auth:
+    enabled: ${SECURITY_AUTH_ENABLED:true}
+
+services:
+  account-info-service:
+    base-url: ${ACCOUNT_INFO_SERVICE_URL:}
+    bearer-token: ${ACCOUNT_INFO_SERVICE_BEARER_TOKEN:}
+    mock-mode-enabled: ${ACCOUNT_INFO_SERVICE_MOCK_MODE_ENABLED:false}
+    accept-legacy-date-format: ${ACCOUNT_INFO_SERVICE_ACCEPT_LEGACY_DATE_FORMAT:false}
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:false}

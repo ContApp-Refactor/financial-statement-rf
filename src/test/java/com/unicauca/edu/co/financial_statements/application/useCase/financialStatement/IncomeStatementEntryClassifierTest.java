@@ -59,6 +59,24 @@ class IncomeStatementEntryClassifierTest {
         assertThat(classifier.isSalesExpenseEntry(salesExpense)).isTrue();
     }
 
+    @Test
+    void shouldPreferAccountCodeWhenTheNameLooksLikeAnotherCategory() {
+        AccountingEntry ordinaryIncomeWithConfusingName = entry("413505", "Otros ingresos - Recuperaciones");
+        AccountingEntry otherIncomeWithConfusingName = entry("421505", "Ventas nacionales");
+        AccountingEntry financialExpenseWithIncomeName = entry("530505", "Ingreso por intereses");
+        AccountingEntry otherIncomeWithExpenseName = entry("421005", "Gastos financieros");
+
+        assertThat(classifier.isOrdinaryIncomeEntry(ordinaryIncomeWithConfusingName)).isTrue();
+        assertThat(classifier.isOtherIncomeEntry(ordinaryIncomeWithConfusingName)).isFalse();
+
+        assertThat(classifier.isOtherIncomeEntry(otherIncomeWithConfusingName)).isTrue();
+        assertThat(classifier.isOrdinaryIncomeEntry(otherIncomeWithConfusingName)).isFalse();
+
+        assertThat(classifier.isFinancialExpenseEntry(financialExpenseWithIncomeName)).isTrue();
+        assertThat(classifier.isFinancialExpenseEntry(otherIncomeWithExpenseName)).isFalse();
+        assertThat(classifier.isOtherIncomeEntry(otherIncomeWithExpenseName)).isTrue();
+    }
+
     private AccountingEntry entry(String code, String name) {
         return AccountingEntry.builder()
                 .accountCode(code)

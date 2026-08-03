@@ -1,0 +1,834 @@
+{
+  "accountInfo": [
+    {
+      "id": 1,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "15-01-2025",
+      "voucher": { "number": 1001, "type": "NC" },
+      "account": { "code": 110505, "nature": "DEBITO", "name": "Activo corriente - Caja" },
+      "thirdPartyId": 1,
+      "accountingMovement": { "description": "Saldo caja actual", "debit": 161000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+{
+      "id": 2,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "20-02-2025",
+      "voucher": { "number": 1002, "type": "NC" },
+      "account": { "code": 130505, "nature": "DEBITO", "name": "Activo corriente - Clientes" },
+      "thirdPartyId": 2,
+      "accountingMovement": { "description": "Cuentas por cobrar actuales", "debit": 75000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 3,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "28-03-2025",
+      "voucher": { "number": 1003, "type": "NC" },
+      "account": { "code": 150405, "nature": "DEBITO", "name": "Activo no corriente - Propiedad planta y equipo" },
+      "thirdPartyId": 3,
+      "accountingMovement": { "description": "Activo fijo actual", "debit": 85000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 4,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "25-03-2025",
+      "voucher": { "number": 1004, "type": "NC" },
+      "account": { "code": 210505, "nature": "CREDITO", "name": "Pasivo corriente - Proveedores" },
+      "thirdPartyId": 4,
+      "accountingMovement": { "description": "Proveedores actuales", "debit": 0, "credit": 60000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 5,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "26-03-2025",
+      "voucher": { "number": 1005, "type": "NC" },
+      "account": { "code": 220505, "nature": "CREDITO", "name": "Pasivo no corriente - Obligaciones financieras" },
+      "thirdPartyId": 5,
+      "accountingMovement": { "description": "Deuda largo plazo actual", "debit": 0, "credit": 25000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 6,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2025",
+      "voucher": { "number": 1006, "type": "NC" },
+      "account": { "code": 310505, "nature": "CREDITO", "name": "Patrimonio - Capital social" },
+      "thirdPartyId": 6,
+      "accountingMovement": { "description": "Capital social actual", "debit": 0, "credit": 75000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 7,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2025",
+      "voucher": { "number": 1007, "type": "NC" },
+      "account": { "code": 360505, "nature": "CREDITO", "name": "Patrimonio - Resultados acumulados" },
+      "thirdPartyId": 7,
+      "accountingMovement": { "description": "Resultados acumulados actuales", "debit": 0, "credit": 30000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 27,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2025",
+      "voucher": { "number": 1008, "type": "NC" },
+      "account": { "code": 330505, "nature": "CREDITO", "name": "Patrimonio - Reserva legal" },
+      "thirdPartyId": 27,
+      "accountingMovement": { "description": "Reserva legal actual", "debit": 0, "credit": 12000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 28,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "28-03-2025",
+      "voucher": { "number": 1009, "type": "NC" },
+      "account": { "code": 370505, "nature": "DEBITO", "name": "Patrimonio - Dividendos decretados" },
+      "thirdPartyId": 28,
+      "accountingMovement": { "description": "Dividendos decretados actuales", "debit": 8000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 8,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "15-01-2024",
+      "voucher": { "number": 9001, "type": "NC" },
+      "account": { "code": 110505, "nature": "DEBITO", "name": "Activo corriente - Caja" },
+      "thirdPartyId": 8,
+      "accountingMovement": { "description": "Saldo caja anterior", "debit": 129000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 9,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "20-02-2024",
+      "voucher": { "number": 9002, "type": "NC" },
+      "account": { "code": 130505, "nature": "DEBITO", "name": "Activo corriente - Clientes" },
+      "thirdPartyId": 9,
+      "accountingMovement": { "description": "Cuentas por cobrar anteriores", "debit": 55000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 10,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "28-03-2024",
+      "voucher": { "number": 9003, "type": "NC" },
+      "account": { "code": 150405, "nature": "DEBITO", "name": "Activo no corriente - Propiedad planta y equipo" },
+      "thirdPartyId": 10,
+      "accountingMovement": { "description": "Activo fijo anterior", "debit": 70000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 11,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "25-03-2024",
+      "voucher": { "number": 9004, "type": "NC" },
+      "account": { "code": 210505, "nature": "CREDITO", "name": "Pasivo corriente - Proveedores" },
+      "thirdPartyId": 11,
+      "accountingMovement": { "description": "Proveedores anteriores", "debit": 0, "credit": 45000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 12,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "26-03-2024",
+      "voucher": { "number": 9005, "type": "NC" },
+      "account": { "code": 220505, "nature": "CREDITO", "name": "Pasivo no corriente - Obligaciones financieras" },
+      "thirdPartyId": 12,
+      "accountingMovement": { "description": "Deuda largo plazo anterior", "debit": 0, "credit": 20000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 13,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2024",
+      "voucher": { "number": 9006, "type": "NC" },
+      "account": { "code": 310505, "nature": "CREDITO", "name": "Patrimonio - Capital social" },
+      "thirdPartyId": 13,
+      "accountingMovement": { "description": "Capital social anterior", "debit": 0, "credit": 65000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 14,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2024",
+      "voucher": { "number": 9007, "type": "NC" },
+      "account": { "code": 360505, "nature": "CREDITO", "name": "Patrimonio - Resultados acumulados" },
+      "thirdPartyId": 14,
+      "accountingMovement": { "description": "Resultados acumulados anteriores", "debit": 0, "credit": 25000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 29,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2024",
+      "voucher": { "number": 9008, "type": "NC" },
+      "account": { "code": 330505, "nature": "CREDITO", "name": "Patrimonio - Reserva legal" },
+      "thirdPartyId": 29,
+      "accountingMovement": { "description": "Reserva legal anterior", "debit": 0, "credit": 9000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 30,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "28-03-2024",
+      "voucher": { "number": 9009, "type": "NC" },
+      "account": { "code": 370505, "nature": "DEBITO", "name": "Patrimonio - Dividendos decretados" },
+      "thirdPartyId": 30,
+      "accountingMovement": { "description": "Dividendos decretados anteriores", "debit": 6000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 15,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "10-01-2025",
+      "voucher": { "number": 4101, "type": "NC" },
+      "account": { "code": 413505, "nature": "CREDITO", "name": "Ingresos operacionales - Ventas nacionales" },
+      "thirdPartyId": 15,
+      "accountingMovement": { "description": "Venta enero actual", "debit": 0, "credit": 90000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 16,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "15-02-2025",
+      "voucher": { "number": 4102, "type": "NC" },
+      "account": { "code": 413505, "nature": "CREDITO", "name": "Ingresos operacionales - Ventas nacionales" },
+      "thirdPartyId": 16,
+      "accountingMovement": { "description": "Venta febrero actual", "debit": 0, "credit": 85000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 17,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "20-03-2025",
+      "voucher": { "number": 4103, "type": "NC" },
+      "account": { "code": 417505, "nature": "CREDITO", "name": "Ingresos operacionales - Devoluciones en ventas" },
+      "thirdPartyId": 17,
+      "accountingMovement": { "description": "Devolucion actual", "debit": 12000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 18,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "22-03-2025",
+      "voucher": { "number": 6101, "type": "NC" },
+      "account": { "code": 613505, "nature": "DEBITO", "name": "Costo de ventas - Mercancia no fabricada por la empresa" },
+      "thirdPartyId": 18,
+      "accountingMovement": { "description": "Costo de ventas actual", "debit": 95000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 19,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "24-03-2025",
+      "voucher": { "number": 5101, "type": "NC" },
+      "account": { "code": 510505, "nature": "DEBITO", "name": "Gastos operacionales de administracion - Sueldos" },
+      "thirdPartyId": 19,
+      "accountingMovement": { "description": "Gasto administracion actual", "debit": 30000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 20,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "25-03-2025",
+      "voucher": { "number": 5201, "type": "NC" },
+      "account": { "code": 520505, "nature": "DEBITO", "name": "Gastos operacionales de ventas - Comisiones" },
+      "thirdPartyId": 20,
+      "accountingMovement": { "description": "Gasto ventas actual", "debit": 15000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 21,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "11-01-2024",
+      "voucher": { "number": 9101, "type": "NC" },
+      "account": { "code": 413505, "nature": "CREDITO", "name": "Ingresos operacionales - Ventas nacionales" },
+      "thirdPartyId": 21,
+      "accountingMovement": { "description": "Venta enero anterior", "debit": 0, "credit": 80000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 22,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "14-02-2024",
+      "voucher": { "number": 9102, "type": "NC" },
+      "account": { "code": 413505, "nature": "CREDITO", "name": "Ingresos operacionales - Ventas nacionales" },
+      "thirdPartyId": 22,
+      "accountingMovement": { "description": "Venta febrero anterior", "debit": 0, "credit": 76000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 23,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "19-03-2024",
+      "voucher": { "number": 9103, "type": "NC" },
+      "account": { "code": 417505, "nature": "CREDITO", "name": "Ingresos operacionales - Devoluciones en ventas" },
+      "thirdPartyId": 23,
+      "accountingMovement": { "description": "Devolucion anterior", "debit": 10000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 24,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "22-03-2024",
+      "voucher": { "number": 9104, "type": "NC" },
+      "account": { "code": 613505, "nature": "DEBITO", "name": "Costo de ventas - Mercancia no fabricada por la empresa" },
+      "thirdPartyId": 24,
+      "accountingMovement": { "description": "Costo de ventas anterior", "debit": 82000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 25,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "24-03-2024",
+      "voucher": { "number": 9105, "type": "NC" },
+      "account": { "code": 510505, "nature": "DEBITO", "name": "Gastos operacionales de administracion - Sueldos" },
+      "thirdPartyId": 25,
+      "accountingMovement": { "description": "Gasto administracion anterior", "debit": 25000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 26,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "25-03-2024",
+      "voucher": { "number": 9106, "type": "NC" },
+      "account": { "code": 520505, "nature": "DEBITO", "name": "Gastos operacionales de ventas - Comisiones" },
+      "thirdPartyId": 26,
+      "accountingMovement": { "description": "Gasto ventas anterior", "debit": 12000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 31,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1010, "type": "NC" },
+      "account": { "code": 120505, "nature": "DEBITO", "name": "Activos financieros inversion temporal" },
+      "thirdPartyId": 31,
+      "accountingMovement": { "description": "Inversion temporal actual", "debit": 12000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 32,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1011, "type": "NC" },
+      "account": { "code": 135515, "nature": "DEBITO", "name": "Activos por impuestos corrientes" },
+      "thirdPartyId": 32,
+      "accountingMovement": { "description": "Impuesto corriente activo actual", "debit": 8000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 33,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1012, "type": "NC" },
+      "account": { "code": 146505, "nature": "DEBITO", "name": "Activos biologicos" },
+      "thirdPartyId": 33,
+      "accountingMovement": { "description": "Activos biologicos actual", "debit": 5000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 34,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1013, "type": "NC" },
+      "account": { "code": 180505, "nature": "DEBITO", "name": "Activos mantenidos para la venta" },
+      "thirdPartyId": 34,
+      "accountingMovement": { "description": "Activos mantenidos para venta actual", "debit": 7000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 35,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1014, "type": "NC" },
+      "account": { "code": 122505, "nature": "DEBITO", "name": "Activos financieros inversiones permanentes" },
+      "thirdPartyId": 35,
+      "accountingMovement": { "description": "Inversion permanente actual", "debit": 25000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 36,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1015, "type": "NC" },
+      "account": { "code": 160505, "nature": "DEBITO", "name": "Activos intangibles" },
+      "thirdPartyId": 36,
+      "accountingMovement": { "description": "Intangibles actual", "debit": 11000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 37,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1016, "type": "NC" },
+      "account": { "code": 151610, "nature": "DEBITO", "name": "Propiedades de inversion" },
+      "thirdPartyId": 37,
+      "accountingMovement": { "description": "Propiedad de inversion actual", "debit": 9000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 38,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1017, "type": "NC" },
+      "account": { "code": 170505, "nature": "DEBITO", "name": "Otros activos diferidos" },
+      "thirdPartyId": 38,
+      "accountingMovement": { "description": "Otros activos actual", "debit": 6000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 39,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1018, "type": "NC" },
+      "account": { "code": 220505, "nature": "CREDITO", "name": "Acreedores comerciales y otras cuentas por pagar" },
+      "thirdPartyId": 39,
+      "accountingMovement": { "description": "Acreedores actuales", "debit": 0, "credit": 18000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 40,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1019, "type": "NC" },
+      "account": { "code": 240805, "nature": "CREDITO", "name": "Pasivos por impuestos corrientes" },
+      "thirdPartyId": 40,
+      "accountingMovement": { "description": "Impuestos corrientes pasivo actual", "debit": 0, "credit": 5000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 41,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1020, "type": "NC" },
+      "account": { "code": 260505, "nature": "CREDITO", "name": "Provision litigios" },
+      "thirdPartyId": 41,
+      "accountingMovement": { "description": "Provision actual", "debit": 0, "credit": 4000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 42,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1021, "type": "NC" },
+      "account": { "code": 230505, "nature": "CREDITO", "name": "Pasivos financieros largo plazo" },
+      "thirdPartyId": 42,
+      "accountingMovement": { "description": "Pasivo financiero largo plazo actual", "debit": 0, "credit": 16000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 43,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1022, "type": "NC" },
+      "account": { "code": 270505, "nature": "CREDITO", "name": "Pasivos por impuestos diferidos" },
+      "thirdPartyId": 43,
+      "accountingMovement": { "description": "Impuestos diferidos actual", "debit": 0, "credit": 3000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 44,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1023, "type": "NC" },
+      "account": { "code": 320505, "nature": "DEBITO", "name": "Acciones propias readquiridas" },
+      "thirdPartyId": 44,
+      "accountingMovement": { "description": "Acciones readquiridas actual", "debit": 2000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 45,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1024, "type": "NC" },
+      "account": { "code": 320510, "nature": "CREDITO", "name": "Prima de emision" },
+      "thirdPartyId": 45,
+      "accountingMovement": { "description": "Prima emision actual", "debit": 0, "credit": 10000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 46,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9010, "type": "NC" },
+      "account": { "code": 120505, "nature": "DEBITO", "name": "Activos financieros inversion temporal" },
+      "thirdPartyId": 46,
+      "accountingMovement": { "description": "Inversion temporal anterior", "debit": 10000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 47,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9011, "type": "NC" },
+      "account": { "code": 135515, "nature": "DEBITO", "name": "Activos por impuestos corrientes" },
+      "thirdPartyId": 47,
+      "accountingMovement": { "description": "Impuesto corriente activo anterior", "debit": 6000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 48,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9012, "type": "NC" },
+      "account": { "code": 146505, "nature": "DEBITO", "name": "Activos biologicos" },
+      "thirdPartyId": 48,
+      "accountingMovement": { "description": "Activos biologicos anterior", "debit": 4000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 49,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9013, "type": "NC" },
+      "account": { "code": 180505, "nature": "DEBITO", "name": "Activos mantenidos para la venta" },
+      "thirdPartyId": 49,
+      "accountingMovement": { "description": "Activos mantenidos para venta anterior", "debit": 5000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 50,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9014, "type": "NC" },
+      "account": { "code": 122505, "nature": "DEBITO", "name": "Activos financieros inversiones permanentes" },
+      "thirdPartyId": 50,
+      "accountingMovement": { "description": "Inversion permanente anterior", "debit": 20000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 51,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9015, "type": "NC" },
+      "account": { "code": 160505, "nature": "DEBITO", "name": "Activos intangibles" },
+      "thirdPartyId": 51,
+      "accountingMovement": { "description": "Intangibles anterior", "debit": 9000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 52,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9016, "type": "NC" },
+      "account": { "code": 151610, "nature": "DEBITO", "name": "Propiedades de inversion" },
+      "thirdPartyId": 52,
+      "accountingMovement": { "description": "Propiedad de inversion anterior", "debit": 7000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 53,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9017, "type": "NC" },
+      "account": { "code": 170505, "nature": "DEBITO", "name": "Otros activos diferidos" },
+      "thirdPartyId": 53,
+      "accountingMovement": { "description": "Otros activos anterior", "debit": 5000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 54,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9018, "type": "NC" },
+      "account": { "code": 220505, "nature": "CREDITO", "name": "Acreedores comerciales y otras cuentas por pagar" },
+      "thirdPartyId": 54,
+      "accountingMovement": { "description": "Acreedores anteriores", "debit": 0, "credit": 14000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 55,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9019, "type": "NC" },
+      "account": { "code": 240805, "nature": "CREDITO", "name": "Pasivos por impuestos corrientes" },
+      "thirdPartyId": 55,
+      "accountingMovement": { "description": "Impuestos corrientes pasivo anterior", "debit": 0, "credit": 4000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 56,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9020, "type": "NC" },
+      "account": { "code": 260505, "nature": "CREDITO", "name": "Provision litigios" },
+      "thirdPartyId": 56,
+      "accountingMovement": { "description": "Provision anterior", "debit": 0, "credit": 3000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 57,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9021, "type": "NC" },
+      "account": { "code": 230505, "nature": "CREDITO", "name": "Pasivos financieros largo plazo" },
+      "thirdPartyId": 57,
+      "accountingMovement": { "description": "Pasivo financiero largo plazo anterior", "debit": 0, "credit": 12000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 58,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9022, "type": "NC" },
+      "account": { "code": 270505, "nature": "CREDITO", "name": "Pasivos por impuestos diferidos" },
+      "thirdPartyId": 58,
+      "accountingMovement": { "description": "Impuestos diferidos anterior", "debit": 0, "credit": 2000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 59,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9023, "type": "NC" },
+      "account": { "code": 320505, "nature": "DEBITO", "name": "Acciones propias readquiridas" },
+      "thirdPartyId": 59,
+      "accountingMovement": { "description": "Acciones readquiridas anterior", "debit": 1500000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 60,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9024, "type": "NC" },
+      "account": { "code": 320510, "nature": "CREDITO", "name": "Prima de emision" },
+      "thirdPartyId": 60,
+      "accountingMovement": { "description": "Prima emision anterior", "debit": 0, "credit": 7000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 61,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "26-03-2025",
+      "voucher": { "number": 1010, "type": "NC" },
+      "account": { "code": 421505, "nature": "CREDITO", "name": "Otros ingresos - Recuperaciones" },
+      "thirdPartyId": 61,
+      "accountingMovement": { "description": "Otros ingresos actuales", "debit": 0, "credit": 9000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 62,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2025",
+      "voucher": { "number": 1011, "type": "NC" },
+      "account": { "code": 530505, "nature": "DEBITO", "name": "Gastos financieros - Intereses" },
+      "thirdPartyId": 62,
+      "accountingMovement": { "description": "Gastos financieros actuales", "debit": 6000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 63,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2025",
+      "voucher": { "number": 1012, "type": "NC" },
+      "account": { "code": 516005, "nature": "DEBITO", "name": "Gastos de administracion - Depreciacion" },
+      "thirdPartyId": 63,
+      "accountingMovement": { "description": "Depreciacion actual", "debit": 4000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 64,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "28-03-2025",
+      "voucher": { "number": 1013, "type": "NC" },
+      "account": { "code": 540505, "nature": "DEBITO", "name": "Impuesto de renta" },
+      "thirdPartyId": 64,
+      "accountingMovement": { "description": "Impuesto de renta actual", "debit": 12000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 65,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "28-03-2025",
+      "voucher": { "number": 1014, "type": "NC" },
+      "account": { "code": 541005, "nature": "DEBITO", "name": "Otros impuestos" },
+      "thirdPartyId": 65,
+      "accountingMovement": { "description": "Otros impuestos actuales", "debit": 3000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 66,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "26-03-2024",
+      "voucher": { "number": 9025, "type": "NC" },
+      "account": { "code": 421505, "nature": "CREDITO", "name": "Otros ingresos - Recuperaciones" },
+      "thirdPartyId": 66,
+      "accountingMovement": { "description": "Otros ingresos anteriores", "debit": 0, "credit": 7000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 67,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2024",
+      "voucher": { "number": 9026, "type": "NC" },
+      "account": { "code": 530505, "nature": "DEBITO", "name": "Gastos financieros - Intereses" },
+      "thirdPartyId": 67,
+      "accountingMovement": { "description": "Gastos financieros anteriores", "debit": 4500000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 68,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "27-03-2024",
+      "voucher": { "number": 9027, "type": "NC" },
+      "account": { "code": 516005, "nature": "DEBITO", "name": "Gastos de administracion - Depreciacion" },
+      "thirdPartyId": 68,
+      "accountingMovement": { "description": "Depreciacion anterior", "debit": 3500000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 69,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "28-03-2024",
+      "voucher": { "number": 9028, "type": "NC" },
+      "account": { "code": 540505, "nature": "DEBITO", "name": "Impuesto de renta" },
+      "thirdPartyId": 69,
+      "accountingMovement": { "description": "Impuesto de renta anterior", "debit": 8000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 70,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "28-03-2024",
+      "voucher": { "number": 9029, "type": "NC" },
+      "account": { "code": 541005, "nature": "DEBITO", "name": "Otros impuestos" },
+      "thirdPartyId": 70,
+      "accountingMovement": { "description": "Otros impuestos anteriores", "debit": 2000000, "credit": 0 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 71,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "26-03-2025",
+      "voucher": { "number": 1015, "type": "NC" },
+      "account": { "code": 421005, "nature": "CREDITO", "name": "Otros ingresos - Intereses" },
+      "thirdPartyId": 71,
+      "accountingMovement": { "description": "Intereses actuales", "debit": 0, "credit": 5000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 72,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "26-03-2024",
+      "voucher": { "number": 9030, "type": "NC" },
+      "account": { "code": 421005, "nature": "CREDITO", "name": "Otros ingresos - Intereses" },
+      "thirdPartyId": 72,
+      "accountingMovement": { "description": "Intereses anteriores", "debit": 0, "credit": 3000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 73,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9031, "type": "NC" },
+      "account": { "code": 210505, "nature": "CREDITO", "name": "Pasivo corriente - Proveedores" },
+      "thirdPartyId": 73,
+      "accountingMovement": { "description": "Proveedores complementarios anteriores", "debit": 0, "credit": 20000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 74,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9032, "type": "NC" },
+      "account": { "code": 230505, "nature": "CREDITO", "name": "Pasivos financieros largo plazo" },
+      "thirdPartyId": 74,
+      "accountingMovement": { "description": "Obligacion financiera complementaria anterior", "debit": 0, "credit": 25000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 75,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9033, "type": "NC" },
+      "account": { "code": 310505, "nature": "CREDITO", "name": "Patrimonio - Capital social" },
+      "thirdPartyId": 75,
+      "accountingMovement": { "description": "Capitalizacion complementaria anterior", "debit": 0, "credit": 20000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 76,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9034, "type": "NC" },
+      "account": { "code": 320510, "nature": "CREDITO", "name": "Prima de emision" },
+      "thirdPartyId": 76,
+      "accountingMovement": { "description": "Prima de emision complementaria anterior", "debit": 0, "credit": 15000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 77,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2024",
+      "voucher": { "number": 9035, "type": "NC" },
+      "account": { "code": 360505, "nature": "CREDITO", "name": "Patrimonio - Resultados acumulados" },
+      "thirdPartyId": 77,
+      "accountingMovement": { "description": "Resultados acumulados complementarios anteriores", "debit": 0, "credit": 22500000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 78,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1016, "type": "NC" },
+      "account": { "code": 210505, "nature": "CREDITO", "name": "Pasivo corriente - Proveedores" },
+      "thirdPartyId": 78,
+      "accountingMovement": { "description": "Proveedores complementarios actuales", "debit": 0, "credit": 30000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 79,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1017, "type": "NC" },
+      "account": { "code": 230505, "nature": "CREDITO", "name": "Pasivos financieros largo plazo" },
+      "thirdPartyId": 79,
+      "accountingMovement": { "description": "Obligacion financiera complementaria actual", "debit": 0, "credit": 30000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 80,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1018, "type": "NC" },
+      "account": { "code": 240805, "nature": "CREDITO", "name": "Pasivos por impuestos corrientes" },
+      "thirdPartyId": 80,
+      "accountingMovement": { "description": "Impuesto corriente complementario actual", "debit": 0, "credit": 12000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 81,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1019, "type": "NC" },
+      "account": { "code": 310505, "nature": "CREDITO", "name": "Patrimonio - Capital social" },
+      "thirdPartyId": 81,
+      "accountingMovement": { "description": "Capitalizacion complementaria actual", "debit": 0, "credit": 25000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 82,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1020, "type": "NC" },
+      "account": { "code": 320510, "nature": "CREDITO", "name": "Prima de emision" },
+      "thirdPartyId": 82,
+      "accountingMovement": { "description": "Prima de emision complementaria actual", "debit": 0, "credit": 12000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    },
+    {
+      "id": 83,
+      "entId": "50a69a75-7134-4189-9c62-fc82c53ff679",
+      "date": "29-03-2025",
+      "voucher": { "number": 1021, "type": "NC" },
+      "account": { "code": 360505, "nature": "CREDITO", "name": "Patrimonio - Resultados acumulados" },
+      "thirdPartyId": 83,
+      "accountingMovement": { "description": "Resultados acumulados complementarios actuales", "debit": 0, "credit": 54000000 },
+      "costCenter": { "code": 1, "name": "General" }
+    }
+  ]
+}

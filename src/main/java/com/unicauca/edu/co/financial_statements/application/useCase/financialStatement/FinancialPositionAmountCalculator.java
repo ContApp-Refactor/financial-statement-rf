@@ -14,16 +14,16 @@ public class FinancialPositionAmountCalculator {
 
     private final FinancialPositionEntryClassifier classifier;
     private final AccountingEntryOperations accountingEntryOperations;
-    private final IncomeStatementAmountCalculator incomeStatementAmountCalculator;
+    private final PeriodResultCalculator periodResultCalculator;
 
     public FinancialPositionAmountCalculator(
             FinancialPositionEntryClassifier classifier,
             AccountingEntryOperations accountingEntryOperations,
-            IncomeStatementAmountCalculator incomeStatementAmountCalculator
+            PeriodResultCalculator periodResultCalculator
     ) {
         this.classifier = classifier;
         this.accountingEntryOperations = accountingEntryOperations;
-        this.incomeStatementAmountCalculator = incomeStatementAmountCalculator;
+        this.periodResultCalculator = periodResultCalculator;
     }
 
     public FinancialPositionAmounts calculate(
@@ -57,8 +57,8 @@ public class FinancialPositionAmountCalculator {
         ComparativeAmount reservas = sumByMatcher(safeCurrentEntries, safePreviousEntries, classifier::isReserveEntry);
         ComparativeAmount utilidadesAcumuladas = sumByMatcher(safeCurrentEntries, safePreviousEntries, classifier::isRetainedEarningsEntry);
         ComparativeAmount utilidadesEjercicio = comparative(
-                incomeStatementAmountCalculator.calculateNetIncomeForCutoff(safeCurrentEntries, currentCutoffDate),
-                incomeStatementAmountCalculator.calculateNetIncomeForCutoff(safePreviousEntries, previousCutoffDate)
+                periodResultCalculator.resolveResultForCutoff(safeCurrentEntries, currentCutoffDate),
+                periodResultCalculator.resolveResultForCutoff(safePreviousEntries, previousCutoffDate)
         );
         ComparativeAmount dividendosDecretados = sumByMatcher(safeCurrentEntries, safePreviousEntries, classifier::isDividendEntry);
         ComparativeAmount accionesPropias = sumByMatcher(safeCurrentEntries, safePreviousEntries, classifier::isTreasuryShareEntry);
@@ -192,8 +192,7 @@ public class FinancialPositionAmountCalculator {
         return scaleAmount(entries.stream()
                 .filter(entry -> entry != null && matcher.test(entry))
                 .map(accountingEntryOperations::signedAmountByNature)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .abs());
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 
     private ComparativeAmount comparative(BigDecimal current, BigDecimal previous) {

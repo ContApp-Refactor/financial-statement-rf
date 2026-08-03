@@ -9,6 +9,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,17 +53,32 @@ public class AccountInfoClient implements IAccountingInfoClient {
             AccountInfoClientProperties properties
     ) {
         this.restTemplate = restTemplateBuilder
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(20))
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(20))
                 .build();
         this.properties = properties;
+        log.debug(
+                "AccountInfoClient initialized. baseUrl={}, mockModeEnabled={}, acceptLegacyDateFormat={}",
+                properties.getBaseUrl(),
+                properties.isMockModeEnabled(),
+                properties.isAcceptLegacyDateFormat()
+        );
     }
 
     @Override
     public List<AccountingEntry> findAccountingEntries(String entId, LocalDate startDate, LocalDate endDate) {
         if (!StringUtils.hasText(properties.getBaseUrl())) {
-            throw new IllegalStateException("The accounting information service URL is not configured.");
+            throw new IllegalStateException("La URL del servicio de informacion contable no esta configurada.");
         }
+
+        log.debug(
+                "Requesting accounting entries. entId={}, startDate={}, endDate={}, baseUrl={}, mockMode={}",
+                entId,
+                startDate,
+                endDate,
+                properties.getBaseUrl(),
+                properties.isMockModeEnabled()
+        );
 
         URI filteredRequestUri = buildFilteredRequestUri(entId, startDate, endDate);
         URI fallbackRequestUri = UriComponentsBuilder.fromUriString(properties.getBaseUrl())
@@ -108,7 +124,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
             log.error("Timeout or connectivity error requesting accounting information from {}", filteredRequestUri, exception);
             throw new AccountInfoClientException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "The accounting module is unavailable or timed out.",
+                    "El modulo contable no esta disponible o agoto el tiempo de espera.",
                     exception
             );
         }
@@ -125,11 +141,12 @@ public class AccountInfoClient implements IAccountingInfoClient {
 
     private boolean shouldUseMockFallback(String entId, LocalDate startDate, LocalDate endDate) {
         return properties.isMockModeEnabled()
-                && isLocalJsonServerMock()
+                && isSupportedMockEndpoint()
                 && (StringUtils.hasText(entId) || startDate != null || endDate != null);
     }
 
     private AccountInfoMovementResponse[] requestEntries(URI requestUri) {
+        log.debug("Calling account-info service: {}", requestUri);
         ResponseEntity<AccountInfoMovementResponse[]> response = restTemplate.exchange(
                 requestUri,
                 HttpMethod.GET,
@@ -149,7 +166,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
             return List.of();
         }
 
-        AccountInfoMovementResponse[] sourceEntries = adaptLocalMockEntries(body, entId);
+        AccountInfoMovementResponse[] sourceEntries = adaptMockEntries(body, entId);
 
         return Arrays.stream(sourceEntries)
                 .filter(Objects::nonNull)
@@ -160,16 +177,16 @@ public class AccountInfoClient implements IAccountingInfoClient {
                 .toList();
     }
 
-    private AccountInfoMovementResponse[] adaptLocalMockEntries(
+    private AccountInfoMovementResponse[] adaptMockEntries(
             AccountInfoMovementResponse[] body,
             String requestedEntId
     ) {
-        if (!shouldAdaptLocalMockEntries(body, requestedEntId)) {
+        if (!shouldAdaptMockEntries(body, requestedEntId)) {
             return body;
         }
 
         log.warn(
-                "The local accounting mock dataset does not contain enterprise {}. Reusing the demo data for that enterprise because mock mode is enabled.",
+                "The accounting mock dataset does not contain enterprise {}. Reusing the demo data for that enterprise because mock mode is enabled.",
                 requestedEntId
         );
 
@@ -178,9 +195,9 @@ public class AccountInfoClient implements IAccountingInfoClient {
                 .toArray(AccountInfoMovementResponse[]::new);
     }
 
-    private boolean shouldAdaptLocalMockEntries(AccountInfoMovementResponse[] body, String requestedEntId) {
+    private boolean shouldAdaptMockEntries(AccountInfoMovementResponse[] body, String requestedEntId) {
         if (!properties.isMockModeEnabled()
-                || !isLocalJsonServerMock()
+                || !isSupportedMockEndpoint()
                 || !StringUtils.hasText(requestedEntId)
                 || body == null
                 || body.length == 0) {
@@ -188,21 +205,31 @@ public class AccountInfoClient implements IAccountingInfoClient {
         }
 
         return Arrays.stream(body)
+                .filter(Objects::nonNull)
                 .map(AccountInfoMovementResponse::getEntId)
                 .filter(StringUtils::hasText)
                 .noneMatch(requestedEntId::equalsIgnoreCase);
     }
 
-    private boolean isLocalJsonServerMock() {
+    private boolean isSupportedMockEndpoint() {
         try {
             URI uri = URI.create(properties.getBaseUrl());
             String host = uri.getHost();
             int port = uri.getPort();
 
-            return port == 4001 && ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host));
+            return isLocalJsonServerMock(host, port) || isPostmanHostedMock(host);
         } catch (Exception exception) {
             return false;
         }
+    }
+
+    private boolean isLocalJsonServerMock(String host, int port) {
+        return port == 4001 && ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host));
+    }
+
+    private boolean isPostmanHostedMock(String host) {
+        return StringUtils.hasText(host)
+                && host.trim().toLowerCase(Locale.ROOT).endsWith(".mock.pstmn.io");
     }
 
     private AccountInfoMovementResponse cloneWithEntId(AccountInfoMovementResponse source, String requestedEntId) {
@@ -245,6 +272,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
 
     private HttpHeaders buildHeaders() {
         HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         String bearerToken = resolveBearerToken();
 
         if (StringUtils.hasText(bearerToken)) {
@@ -318,29 +346,29 @@ public class AccountInfoClient implements IAccountingInfoClient {
 
     private void validateSource(AccountInfoMovementResponse source) {
         if (source == null) {
-            throw invalidPayload("The accounting module returned a null movement.");
+            throw invalidPayload("El modulo contable devolvio un movimiento nulo.");
         }
         if (source.getAccount() == null) {
-            throw invalidPayload("The accounting module returned a movement without account.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin cuenta contable.");
         }
         if (source.getAccountingMovement() == null) {
-            throw invalidPayload("The accounting module returned a movement without accountingMovement.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin detalle contable.");
         }
         if (!StringUtils.hasText(source.getDate())) {
-            throw invalidPayload("The accounting module returned a movement without date.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin fecha.");
         }
         if (!StringUtils.hasText(source.getAccount().getCode())) {
-            throw invalidPayload("The accounting module returned a movement without account.code.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin codigo de cuenta.");
         }
         if (!StringUtils.hasText(source.getAccount().getNature())) {
-            throw invalidPayload("The accounting module returned a movement without account.nature.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin naturaleza de cuenta.");
         }
     }
 
     private LocalDate parseDate(String value) {
         String normalizedValue = value != null ? value.trim() : null;
         if (!StringUtils.hasText(normalizedValue)) {
-            throw invalidPayload("The accounting module returned a movement without a valid date.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin una fecha valida.");
         }
 
         try {
@@ -348,7 +376,8 @@ public class AccountInfoClient implements IAccountingInfoClient {
         } catch (DateTimeParseException ignored) {
             if (!properties.isAcceptLegacyDateFormat()) {
                 throw invalidPayload(
-                        "The accounting module returned an unsupported date format: " + normalizedValue + ". Expected yyyy-MM-dd."
+                        "El modulo contable devolvio un formato de fecha no soportado: "
+                                + normalizedValue + ". Use yyyy-MM-dd."
                 );
             }
         }
@@ -357,7 +386,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
             return LocalDate.parse(normalizedValue, LEGACY_MOCK_DATE_FORMATTER);
         } catch (DateTimeParseException exception) {
             throw invalidPayload(
-                    "The accounting module returned an unsupported date format: " + normalizedValue + "."
+                    "El modulo contable devolvio un formato de fecha no soportado: " + normalizedValue + "."
             );
         }
     }
@@ -365,7 +394,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
     private String normalizeNature(String value) {
         String normalized = value != null ? value.trim().toUpperCase(Locale.ROOT) : null;
         if (!"DEBITO".equals(normalized) && !"CREDITO".equals(normalized)) {
-            throw invalidPayload("The accounting module returned an unsupported account.nature: " + value + ".");
+            throw invalidPayload("El modulo contable devolvio una naturaleza de cuenta no soportada: " + value + ".");
         }
         return normalized;
     }
@@ -373,7 +402,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
     private String normalizeAccountCode(String value) {
         String normalized = value != null ? value.trim() : null;
         if (!StringUtils.hasText(normalized)) {
-            throw invalidPayload("The accounting module returned a movement without a valid account.code.");
+            throw invalidPayload("El modulo contable devolvio un movimiento sin un codigo de cuenta valido.");
         }
         return normalized;
     }
@@ -392,7 +421,7 @@ public class AccountInfoClient implements IAccountingInfoClient {
 
         return new AccountInfoClientException(
                 HttpStatus.BAD_GATEWAY,
-                "The accounting module request failed with status " + exception.getStatusCode().value() + ".",
+                "La solicitud al modulo contable fallo con el estado " + exception.getStatusCode().value() + ".",
                 exception
         );
     }

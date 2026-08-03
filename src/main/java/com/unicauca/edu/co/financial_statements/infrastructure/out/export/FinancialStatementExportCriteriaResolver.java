@@ -39,9 +39,10 @@ class FinancialStatementExportCriteriaResolver {
 
         List<ReportCriterion> items = new ArrayList<>();
         String criteriaType = mapCriteriaType(asText(criteria.get("criteriaType")));
-        if (StringUtils.hasText(criteriaType)) {
-            items.add(new ReportCriterion("Tipo de Nivel", criteriaType));
-        }
+        items.add(new ReportCriterion(
+                "Tipo de Nivel",
+                StringUtils.hasText(criteriaType) ? criteriaType : "Estructura predeterminada"
+        ));
 
         Map<String, Object> range = extractStructuredMap(criteria.get("criteriaRange"));
         if (!range.isEmpty()) {

@@ -1,12 +1,12 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.out.persistence;
 
 import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementPersistencePort;
-import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementEmailScheduleEntity;
+import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementAnnotationEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementHistoryEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementLogEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementTemplateEntity;
-import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.repository.IFinancialStatementEmailScheduleRepository;
+import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.repository.IFinancialStatementAnnotationRepository;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.repository.IFinancialStatementRepository;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.repository.IFinancialStatementHistoryRepository;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.repository.IFinancialStatementLogRepository;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,10 +25,10 @@ import java.util.UUID;
 public class FinancialStatementPersistenceAdapter implements IFinancialStatementPersistencePort {
 
     private final IFinancialStatementRepository financialStatementRepository;
+    private final IFinancialStatementAnnotationRepository financialStatementAnnotationRepository;
     private final IFinancialStatementHistoryRepository financialStatementHistoryRepository;
     private final IFinancialStatementLogRepository financialStatementLogRepository;
     private final IFinancialStatementTemplateRepository financialStatementTemplateRepository;
-    private final IFinancialStatementEmailScheduleRepository financialStatementEmailScheduleRepository;
 
     @Override
     public FinancialStatementEntity saveFinancialStatement(FinancialStatementEntity entity) {
@@ -87,37 +86,27 @@ public class FinancialStatementPersistenceAdapter implements IFinancialStatement
     }
 
     @Override
-    public FinancialStatementEmailScheduleEntity saveEmailSchedule(FinancialStatementEmailScheduleEntity entity) {
-        return financialStatementEmailScheduleRepository.save(entity);
+    public void deleteTemplate(FinancialStatementTemplateEntity entity) {
+        financialStatementTemplateRepository.delete(entity);
     }
 
     @Override
-    public Optional<FinancialStatementEmailScheduleEntity> findEmailScheduleById(Long scheduleId) {
-        return financialStatementEmailScheduleRepository.findById(scheduleId);
+    public FinancialStatementAnnotationEntity saveAnnotation(FinancialStatementAnnotationEntity entity) {
+        return financialStatementAnnotationRepository.save(entity);
     }
 
     @Override
-    public List<FinancialStatementEmailScheduleEntity> findEmailSchedulesByReportId(UUID reportId) {
-        return financialStatementEmailScheduleRepository.findByFinancialStatement_ReportIdOrderByCreatedAtDesc(reportId);
+    public Optional<FinancialStatementAnnotationEntity> findAnnotationByIdAndReportId(Long annotationId, UUID reportId) {
+        return financialStatementAnnotationRepository.findByIdAndFinancialStatement_ReportId(annotationId, reportId);
     }
 
     @Override
-    public List<FinancialStatementEmailScheduleEntity> findDueActiveEmailSchedules(OffsetDateTime cutoffAt) {
-        return financialStatementEmailScheduleRepository.findByActiveTrueAndNextRunAtLessThanEqual(cutoffAt);
+    public List<FinancialStatementAnnotationEntity> findAnnotationsByReportId(UUID reportId) {
+        return financialStatementAnnotationRepository.findByFinancialStatement_ReportIdOrderByCreatedAtAsc(reportId);
     }
 
     @Override
-    public boolean claimDueEmailSchedule(
-            Long scheduleId,
-            OffsetDateTime cutoffAt,
-            OffsetDateTime claimedUntil,
-            OffsetDateTime updatedAt
-    ) {
-        return financialStatementEmailScheduleRepository.claimDueEmailSchedule(
-                scheduleId,
-                cutoffAt,
-                claimedUntil,
-                updatedAt
-        ) > 0;
+    public void deleteAnnotation(FinancialStatementAnnotationEntity entity) {
+        financialStatementAnnotationRepository.delete(entity);
     }
 }

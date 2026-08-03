@@ -2,6 +2,7 @@ package com.unicauca.edu.co.financial_statements.application.useCase.financialSt
 
 import com.unicauca.edu.co.financial_statements.application.ports.in.financialStatement.IFinancialStatementCommandPort;
 import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementPersistencePort;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementAnnotation;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementCriteria;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementDataPayload;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementGenerationResult;
@@ -16,6 +17,7 @@ import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.e
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementHistoryEntity;
 import com.unicauca.edu.co.financial_statements.infrastructure.out.persistence.entity.FinancialStatementLogEntity;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class FinancialStatementCommandUC implements IFinancialStatementCommandPort {
 
@@ -37,7 +40,9 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
     private final FinancialStatementSnapshotMapper financialStatementSnapshotMapper;
     private final FinancialStatementRequestSupport financialStatementRequestSupport;
     private final FinancialStatementTemplateManager financialStatementTemplateManager;
+    private final FinancialStatementAnnotationManager financialStatementAnnotationManager;
     private final FinancialStatementDataGenerator financialStatementDataGenerator;
+    private final FinancialStatementReportMetadataMapper financialStatementReportMetadataMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -64,14 +69,15 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
     @Override
     public Optional<FinancialStatementGenerationResult> getFinancialStatementSnapshot(UUID reportId) {
         return financialStatementPersistencePort.findFinancialStatementByReportId(reportId)
-                .map(financialStatementSnapshotMapper::toGenerationResult);
+                .map(financialStatementSnapshotMapper::toGenerationResult)
+                .map(result -> enrichWithAnnotations(result, reportId));
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResult<FinancialStatementHistoryItem> getHistoryByEnterprise(String enterpriseId, int page, int size, String sort) {
         if (!StringUtils.hasText(enterpriseId)) {
-            throw new IllegalArgumentException("enterpriseId is required.");
+            throw new IllegalArgumentException("El enterpriseId es obligatorio.");
         }
 
         Pageable pageable = buildHistoryPageable(page, size, sort);
@@ -91,7 +97,7 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
     @Transactional(readOnly = true)
     public List<FinancialStatementLog> getLogsByReportId(UUID reportId) {
         if (reportId == null) {
-            throw new IllegalArgumentException("reportId is required.");
+            throw new IllegalArgumentException("El reportId es obligatorio.");
         }
 
         return financialStatementPersistencePort.findLogsByReportId(reportId).stream()
@@ -124,30 +130,66 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
 
     @Override
     @Transactional
+    public void deleteTemplate(String enterpriseId, Long templateId) {
+        financialStatementTemplateManager.deleteTemplate(enterpriseId, templateId);
+    }
+
+    @Override
+    @Transactional
+    public int deleteTemplates(String enterpriseId, List<Long> templateIds) {
+        return financialStatementTemplateManager.deleteTemplates(enterpriseId, templateIds);
+    }
+
+    @Override
+    @Transactional
+    public int deleteAllTemplates(String enterpriseId) {
+        return financialStatementTemplateManager.deleteAllTemplates(enterpriseId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FinancialStatementAnnotation> getAnnotations(UUID reportId) {
+        return financialStatementAnnotationManager.getAnnotations(reportId);
+    }
+
+    @Override
+    @Transactional
+    public FinancialStatementAnnotation createAnnotation(UUID reportId, String text) {
+        return financialStatementAnnotationManager.createAnnotation(reportId, text);
+    }
+
+    @Override
+    @Transactional
+    public FinancialStatementAnnotation updateAnnotation(UUID reportId, Long annotationId, String text) {
+        return financialStatementAnnotationManager.updateAnnotation(reportId, annotationId, text);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAnnotation(UUID reportId, Long annotationId) {
+        financialStatementAnnotationManager.deleteAnnotation(reportId, annotationId);
+    }
+
+    @Override
+    @Transactional
     public void registerDeliveryEvent(UUID reportId, String deliveryWay, String message, String eventType) {
         FinancialStatementEntity statement = resolveFinancialStatement(reportId);
         OffsetDateTime eventAt = OffsetDateTime.now();
-        String resolvedDeliveryWay = StringUtils.hasText(deliveryWay)
-                ? deliveryWay.trim().toUpperCase()
-                : EDeliveryWay.DOWNLOAD.name();
+        String resolvedDeliveryWay = EDeliveryWay.DOWNLOAD.name();
         String resolvedEventType = StringUtils.hasText(eventType)
                 ? eventType.trim().toUpperCase()
                 : "DELIVERED";
-        String resolvedState = "EMAIL".equals(resolvedDeliveryWay) || "SCHEDULED_EMAIL".equals(resolvedDeliveryWay)
-                ? "EMAILED"
-                : "DOWNLOADED";
+        String resolvedState = "DOWNLOADED";
         String resolvedMessage = StringUtils.hasText(message)
                 ? message
-                : ("EMAILED".equals(resolvedState)
-                ? "Reporte enviado por correo."
-                : "Reporte descargado correctamente.");
+                : "Reporte descargado correctamente.";
 
         appendHistory(statement, resolvedState, resolvedDeliveryWay, eventAt);
         appendLog(
                 statement,
                 resolvedEventType,
                 resolvedMessage,
-                "EMAIL".equals(resolvedDeliveryWay) || "SCHEDULED_EMAIL".equals(resolvedDeliveryWay) ? "mail" : "download",
+                "download",
                 "INFO",
                 eventAt
         );
@@ -177,10 +219,24 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
                 .entId(request.getEntId())
                 .criteria(persistedCriteria)
                 .createdAt(createdAt)
-                .downloadUrl(persist ? buildDownloadUrl(reportId) : null)
+                .downloadUrl(persist ? financialStatementReportMetadataMapper.buildDownloadUrl(reportId) : null)
                 .build();
 
-        FinancialStatementDataPayload payload = financialStatementDataGenerator.generate(request);
+        FinancialStatementDataPayload payload;
+        try {
+            payload = financialStatementDataGenerator.generate(request);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            log.error(
+                    "Error generating financial statement. entId={}, type={}, persist={}",
+                    request.getEntId(),
+                    request.getType(),
+                    persist,
+                    exception
+            );
+            throw new FinancialStatementGenerationException("Error al generar el reporte. Intente mas tarde.", exception);
+        }
 
         if (persist) {
             FinancialStatementEntity savedStatement = financialStatementPersistencePort.saveFinancialStatement(
@@ -193,6 +249,7 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
         return FinancialStatementGenerationResult.builder()
                 .financialStatement(report)
                 .financialStatementData(payload.getRows())
+                .annotations(List.of())
                 .totalAssets(payload.getTotalAssets())
                 .totalLiabilities(payload.getTotalLiabilities())
                 .totalEquity(payload.getTotalEquity())
@@ -216,7 +273,7 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
                 .entId(entity.getEntId())
                 .criteria(extractCriteria(entity))
                 .createdAt(entity.getCreatedAt())
-                .downloadUrl(buildDownloadUrl(entity.getReportId()))
+                .downloadUrl(financialStatementReportMetadataMapper.buildDownloadUrl(entity.getReportId()))
                 .build();
     }
 
@@ -252,7 +309,7 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
                 .state(entity.getState())
                 .deliveryWay(entity.getDeliveryWay())
                 .eventAt(entity.getCreatedAt())
-                .downloadUrl(buildDownloadUrl(statement.getReportId()))
+                .downloadUrl(financialStatementReportMetadataMapper.buildDownloadUrl(statement.getReportId()))
                 .build();
     }
 
@@ -271,13 +328,25 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
         return snapshot != null ? snapshot.getCriteria() : null;
     }
 
+    private FinancialStatementGenerationResult enrichWithAnnotations(
+            FinancialStatementGenerationResult result,
+            UUID reportId
+    ) {
+        if (result == null || reportId == null) {
+            return result;
+        }
+
+        result.setAnnotations(financialStatementAnnotationManager.getAnnotations(reportId));
+        return result;
+    }
+
     private FinancialStatementEntity resolveFinancialStatement(UUID reportId) {
         if (reportId == null) {
-            throw new IllegalArgumentException("reportId is required.");
+            throw new IllegalArgumentException("El reportId es obligatorio.");
         }
 
         return financialStatementPersistencePort.findFinancialStatementByReportId(reportId)
-                .orElseThrow(() -> new IllegalArgumentException("Financial statement report not found."));
+                .orElseThrow(() -> new IllegalArgumentException("No se encontro el reporte del estado financiero."));
     }
 
     private void appendHistory(
@@ -316,7 +385,4 @@ public class FinancialStatementCommandUC implements IFinancialStatementCommandPo
         );
     }
 
-    private String buildDownloadUrl(UUID reportId) {
-        return "/api/financial-statements/" + reportId + "/download";
-    }
 }

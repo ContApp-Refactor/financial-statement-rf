@@ -1,6 +1,5 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.in.rest.dto.request;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,8 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UpdateFinancialStatementEmailScheduleStatusRequest {
-
-    @NotNull(message = "active is required")
-    private Boolean active;
+public class VisualSignatureRequest {
+    private String fileName;
+    private String contentType;
+    private String base64Content;
+    private String signerName;
+    private String signerRole;
 }

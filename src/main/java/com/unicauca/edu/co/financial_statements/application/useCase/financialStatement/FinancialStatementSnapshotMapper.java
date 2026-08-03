@@ -19,6 +19,7 @@ public class FinancialStatementSnapshotMapper {
 
     private final ObjectMapper objectMapper;
     private final FinancialStatementRowMapper financialStatementRowMapper;
+    private final FinancialStatementReportMetadataMapper financialStatementReportMetadataMapper;
 
     public String toJson(FinancialStatementReport report, FinancialStatementDataPayload payload) {
         FinancialStatementSnapshot snapshot = FinancialStatementSnapshot.builder()
@@ -37,7 +38,7 @@ public class FinancialStatementSnapshotMapper {
         try {
             return objectMapper.writeValueAsString(snapshot);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Error serializing financial statement snapshot.", exception);
+            throw new IllegalStateException("No fue posible serializar el snapshot del estado financiero.", exception);
         }
     }
 
@@ -73,11 +74,12 @@ public class FinancialStatementSnapshotMapper {
                         .entId(entity.getEntId())
                         .criteria(snapshot != null ? snapshot.getCriteria() : null)
                         .createdAt(entity.getCreatedAt())
-                        .downloadUrl("/api/financial-statements/" + entity.getReportId() + "/download")
+                        .downloadUrl(financialStatementReportMetadataMapper.buildDownloadUrl(entity.getReportId()))
                         .build())
                 .financialStatementData(snapshot != null
                         ? snapshot.getFinancialStatementData()
                         : List.of())
+                .annotations(List.of())
                 .totalAssets(snapshot != null ? snapshot.getTotalAssets() : null)
                 .totalLiabilities(snapshot != null ? snapshot.getTotalLiabilities() : null)
                 .totalEquity(snapshot != null ? snapshot.getTotalEquity() : null)

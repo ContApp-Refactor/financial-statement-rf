@@ -1,6 +1,7 @@
 package com.unicauca.edu.co.financial_statements.infrastructure.out.export;
 
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementRow;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementVisualSignature;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -9,6 +10,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -38,6 +40,19 @@ public class FinancialStatementExportService {
             Map<String, Object> financialStatement,
             ExportStyle exportStyle
     ) {
+        return export(format, reportName, enterpriseName, rows, financialStatement, exportStyle, List.of(), List.of());
+    }
+
+    public ExportedFile export(
+            EReportExportFormat format,
+            String reportName,
+            String enterpriseName,
+            List<Map<String, Object>> rows,
+            Map<String, Object> financialStatement,
+            ExportStyle exportStyle,
+            List<String> annotationTexts,
+            List<FinancialStatementVisualSignature> visualSignatures
+    ) {
         EReportExportFormat safeFormat = format != null ? format : EReportExportFormat.PDF;
         String safeReportName = StringUtils.hasText(reportName) ? reportName.trim() : DEFAULT_TITLE;
         String safeEnterprise = StringUtils.hasText(enterpriseName) ? enterpriseName.trim() : DEFAULT_ENTERPRISE;
@@ -45,13 +60,17 @@ public class FinancialStatementExportService {
         List<FinancialStatementRow> typedRows = financialStatementExportRowMapper.toRows(safeRows);
         Map<String, Object> safeFinancialStatement = financialStatement != null ? financialStatement : Map.of();
         ExportStyle safeExportStyle = exportStyle != null ? exportStyle : new ExportStyle(null, null, null, null, null);
+        List<String> safeAnnotationTexts = annotationTexts != null ? annotationTexts : List.of();
+        List<FinancialStatementSignatureBlock> signatureBlocks = toSignatureBlocks(visualSignatures);
 
         FinancialStatementTableModel model = financialStatementTableModelResolver.resolve(
                 safeReportName,
                 safeEnterprise,
                 safeRows,
                 typedRows,
-                safeFinancialStatement
+                safeFinancialStatement,
+                safeAnnotationTexts,
+                signatureBlocks
         );
 
         return financialStatementDocumentRenderer.export(
@@ -59,6 +78,29 @@ public class FinancialStatementExportService {
                 model,
                 safeExportStyle
         );
+    }
+
+    private List<FinancialStatementSignatureBlock> toSignatureBlocks(
+            List<FinancialStatementVisualSignature> visualSignatures
+    ) {
+        if (visualSignatures == null || visualSignatures.isEmpty()) {
+            return List.of();
+        }
+
+        return visualSignatures.stream()
+                .filter(Objects::nonNull)
+                .limit(2)
+                .map(signature -> new FinancialStatementSignatureBlock(
+                        signature.getContent(),
+                        normalizeText(signature.getSignerName()),
+                        normalizeText(signature.getSignerRole())
+                ))
+                .filter(signature -> signature.image() != null && signature.image().length > 0)
+                .toList();
+    }
+
+    private String normalizeText(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
     }
 
     public record ExportStyle(

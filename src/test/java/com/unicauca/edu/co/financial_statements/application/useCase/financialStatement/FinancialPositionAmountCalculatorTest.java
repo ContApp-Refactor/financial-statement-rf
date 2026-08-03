@@ -16,8 +16,10 @@ class FinancialPositionAmountCalculatorTest {
     private final FinancialPositionEntryClassifier classifier = new FinancialPositionEntryClassifier(accountingEntryOperations);
     private final IncomeStatementAmountCalculator incomeStatementAmountCalculator =
             new IncomeStatementAmountCalculator(accountingEntryOperations);
+    private final PeriodResultCalculator periodResultCalculator =
+            new PeriodResultCalculator(accountingEntryOperations, incomeStatementAmountCalculator);
     private final FinancialPositionAmountCalculator calculator =
-            new FinancialPositionAmountCalculator(classifier, accountingEntryOperations, incomeStatementAmountCalculator);
+            new FinancialPositionAmountCalculator(classifier, accountingEntryOperations, periodResultCalculator);
 
     @Test
     void shouldCalculateFinancialPositionAmountsWithoutMixingTaxAssetAndTaxLiability() {
@@ -101,6 +103,42 @@ class FinancialPositionAmountCalculatorTest {
         assertThat(amounts.totalPatrimonio().previous()).isEqualByComparingTo("175000000.00");
         assertThat(amounts.utilidadesEjercicio().previous()).isEqualByComparingTo("19000000.00");
     }
+
+    @Test
+    void shouldUseClosedCurrentPeriodResultWhenThereAreNoOperationalEntriesInTheYear() {
+        FinancialPositionAmounts amounts = calculator.calculate(
+                List.of(
+                        creditEntry(LocalDate.of(2025, 3, 1), "310505", "Capital social", "100"),
+                        creditEntry(LocalDate.of(2025, 3, 2), "350505", "Ganancia del ejercicio cerrada", "40")
+                ),
+                List.of(),
+                LocalDate.of(2025, 3, 31),
+                LocalDate.of(2024, 3, 31)
+        );
+
+        assertThat(amounts.utilidadesEjercicio().current()).isEqualByComparingTo("40.00");
+        assertThat(amounts.totalPatrimonio().current()).isEqualByComparingTo("140.00");
+    }
+
+    @Test
+    void shouldAvoidDoubleCountingClosedCurrentPeriodResultWhenOperationalEntriesExist() {
+        FinancialPositionAmounts amounts = calculator.calculate(
+                List.of(
+                        creditEntry(LocalDate.of(2025, 3, 1), "310505", "Capital social", "100"),
+                        creditEntry(LocalDate.of(2025, 3, 2), "350505", "Ganancia del ejercicio cerrada", "40"),
+                        creditEntry(LocalDate.of(2025, 1, 10), "413505", "Ventas nacionales", "100"),
+                        debitEntry(LocalDate.of(2025, 1, 11), "613505", "Costo de ventas", "40"),
+                        debitEntry(LocalDate.of(2025, 1, 12), "510505", "Gastos de administracion", "20")
+                ),
+                List.of(),
+                LocalDate.of(2025, 3, 31),
+                LocalDate.of(2024, 3, 31)
+        );
+
+        assertThat(amounts.utilidadesEjercicio().current()).isEqualByComparingTo("40.00");
+        assertThat(amounts.totalPatrimonio().current()).isEqualByComparingTo("140.00");
+    }
+
     private AccountingEntry debitEntry(LocalDate date, String code, String name, String amount) {
         return AccountingEntry.builder()
                 .date(date)

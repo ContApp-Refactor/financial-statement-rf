@@ -39,7 +39,7 @@ public class MultiFormatLocalDateDeserializer extends JsonDeserializer<LocalDate
         throw context.weirdStringException(
                 normalized,
                 LocalDate.class,
-                "Unsupported date format. Use yyyy-MM-dd or dd/MM/yyyy."
+                "Formato de fecha no soportado. Use yyyy-MM-dd o dd/MM/yyyy."
         );
     }
 }

@@ -2,6 +2,7 @@ package com.unicauca.edu.co.financial_statements.infrastructure.out.export;
 
 import com.unicauca.edu.co.financial_statements.application.ports.out.IFinancialStatementExportPort;
 import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementExportStyle;
+import com.unicauca.edu.co.financial_statements.domain.models.core.FinancialStatementVisualSignature;
 import com.unicauca.edu.co.financial_statements.domain.models.enums.EReportExportFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -45,6 +46,20 @@ public class FinancialStatementExportAdapter implements IFinancialStatementExpor
             Map<String, Object> financialStatement,
             FinancialStatementExportStyle exportStyle
     ) {
+        return export(format, reportName, enterpriseName, rows, financialStatement, exportStyle, List.of(), null);
+    }
+
+    @Override
+    public ExportedDocument export(
+            EReportExportFormat format,
+            String reportName,
+            String enterpriseName,
+            List<Map<String, Object>> rows,
+            Map<String, Object> financialStatement,
+            FinancialStatementExportStyle exportStyle,
+            List<String> annotationTexts,
+            List<FinancialStatementVisualSignature> visualSignatures
+    ) {
         FinancialStatementExportService.ExportedFile exportedFile = financialStatementExportService.export(
                 format,
                 reportName,
@@ -59,7 +74,9 @@ public class FinancialStatementExportAdapter implements IFinancialStatementExpor
                         exportStyle.getFontSize(),
                         exportStyle.getMainColor()
                 )
-                        : null
+                        : null,
+                annotationTexts,
+                visualSignatures
         );
 
         return new ExportedDocument(

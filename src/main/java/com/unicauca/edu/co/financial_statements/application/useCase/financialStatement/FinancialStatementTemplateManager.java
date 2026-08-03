@@ -28,7 +28,7 @@ public class FinancialStatementTemplateManager {
 
         if (entity.getId() == null
                 && financialStatementPersistencePort.countTemplatesByEnterprise(enterpriseId) >= MAX_TEMPLATES_PER_ENTERPRISE) {
-            throw new IllegalArgumentException("A maximum of 3 templates is allowed per enterprise.");
+            throw new IllegalArgumentException("Se permite un maximo de 3 plantillas por empresa.");
         }
 
         boolean shouldBeDefault = resolveDefaultFlag(template, entity, enterpriseId);
@@ -68,7 +68,7 @@ public class FinancialStatementTemplateManager {
 
     public List<FinancialStatementTemplate> getTemplatesByEnterprise(String enterpriseId) {
         if (!StringUtils.hasText(enterpriseId)) {
-            throw new IllegalArgumentException("enterpriseId is required.");
+            throw new IllegalArgumentException("El enterpriseId es obligatorio.");
         }
 
         return financialStatementPersistencePort.findTemplatesByEnterprise(enterpriseId.trim()).stream()
@@ -78,22 +78,61 @@ public class FinancialStatementTemplateManager {
 
     public Optional<FinancialStatementTemplate> getDefaultTemplateByEnterprise(String enterpriseId) {
         if (!StringUtils.hasText(enterpriseId)) {
-            throw new IllegalArgumentException("enterpriseId is required.");
+            throw new IllegalArgumentException("El enterpriseId es obligatorio.");
         }
 
         return financialStatementPersistencePort.findDefaultTemplateByEnterprise(enterpriseId.trim())
                 .map(this::toTemplate);
     }
 
+    public void deleteTemplate(String enterpriseId, Long templateId) {
+        if (!StringUtils.hasText(enterpriseId)) {
+            throw new IllegalArgumentException("El enterpriseId es obligatorio.");
+        }
+        if (templateId == null) {
+            throw new IllegalArgumentException("El templateId es obligatorio.");
+        }
+
+        deleteTemplatesInternal(enterpriseId.trim(), List.of(templateId));
+    }
+
+    public int deleteTemplates(String enterpriseId, List<Long> templateIds) {
+        if (!StringUtils.hasText(enterpriseId)) {
+            throw new IllegalArgumentException("El enterpriseId es obligatorio.");
+        }
+        if (templateIds == null || templateIds.isEmpty()) {
+            throw new IllegalArgumentException("Los templateIds son obligatorios.");
+        }
+
+        return deleteTemplatesInternal(enterpriseId.trim(), templateIds);
+    }
+
+    public int deleteAllTemplates(String enterpriseId) {
+        if (!StringUtils.hasText(enterpriseId)) {
+            throw new IllegalArgumentException("El enterpriseId es obligatorio.");
+        }
+
+        List<Long> templateIds = financialStatementPersistencePort.findTemplatesByEnterprise(enterpriseId.trim()).stream()
+                .map(FinancialStatementTemplateEntity::getId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        if (templateIds.isEmpty()) {
+            return 0;
+        }
+
+        return deleteTemplatesInternal(enterpriseId.trim(), templateIds);
+    }
+
     private void validateTemplate(FinancialStatementTemplate template) {
         if (template == null) {
-            throw new IllegalArgumentException("template is required.");
+            throw new IllegalArgumentException("La plantilla es obligatoria.");
         }
         if (!StringUtils.hasText(template.getEntId())) {
-            throw new IllegalArgumentException("enterpriseId is required.");
+            throw new IllegalArgumentException("El enterpriseId es obligatorio.");
         }
         if (!StringUtils.hasText(template.getName())) {
-            throw new IllegalArgumentException("name is required.");
+            throw new IllegalArgumentException("El nombre de la plantilla es obligatorio.");
         }
     }
 
@@ -112,7 +151,7 @@ public class FinancialStatementTemplateManager {
         }
 
         return financialStatementPersistencePort.findTemplateByIdAndEnterprise(template.getId(), enterpriseId)
-                .orElseThrow(() -> new IllegalArgumentException("Financial statement template not found."));
+                .orElseThrow(() -> new IllegalArgumentException("No se encontro la plantilla del estado financiero."));
     }
 
     private boolean resolveDefaultFlag(
@@ -158,5 +197,53 @@ public class FinancialStatementTemplateManager {
                 .isDefault(entity.getIsDefault())
                 .createdAt(entity.getCreatedAt())
                 .build();
+    }
+
+    private int deleteTemplatesInternal(String enterpriseId, List<Long> templateIds) {
+        List<Long> normalizedIds = templateIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (normalizedIds.isEmpty()) {
+            throw new IllegalArgumentException("Los templateIds son obligatorios.");
+        }
+
+        List<FinancialStatementTemplateEntity> templates = normalizedIds.stream()
+                .map(templateId -> financialStatementPersistencePort.findTemplateByIdAndEnterprise(templateId, enterpriseId)
+                        .orElseThrow(() -> new IllegalArgumentException("No se encontro la plantilla del estado financiero.")))
+                .toList();
+
+        boolean deletedDefault = templates.stream().anyMatch(template -> Boolean.TRUE.equals(template.getIsDefault()));
+        templates.forEach(financialStatementPersistencePort::deleteTemplate);
+
+        if (deletedDefault) {
+            assignDefaultIfNeeded(enterpriseId);
+        }
+
+        return templates.size();
+    }
+
+    private void assignDefaultIfNeeded(String enterpriseId) {
+        List<FinancialStatementTemplateEntity> remainingTemplates = financialStatementPersistencePort
+                .findTemplatesByEnterprise(enterpriseId);
+
+        if (remainingTemplates.isEmpty()) {
+            return;
+        }
+
+        boolean hasDefault = remainingTemplates.stream().anyMatch(template -> Boolean.TRUE.equals(template.getIsDefault()));
+        if (hasDefault) {
+            return;
+        }
+
+        FinancialStatementTemplateEntity fallbackTemplate = remainingTemplates.stream()
+                .findFirst()
+                .orElse(null);
+
+        if (fallbackTemplate != null) {
+            fallbackTemplate.setIsDefault(Boolean.TRUE);
+            financialStatementPersistencePort.saveTemplate(fallbackTemplate);
+        }
     }
 }
