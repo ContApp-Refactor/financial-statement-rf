@@ -72,7 +72,7 @@ management:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:4300}
-
+ 
 services:
   account-info-service:
     base-url: ${ACCOUNT_INFO_SERVICE_URL:https://bef02d1f-e3aa-47bc-a9e9-ab242f8696d0.mock.pstmn.io/accountInfo}
