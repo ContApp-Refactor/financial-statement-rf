@@ -1,6 +1,6 @@
 services:
   financial-statement-rf:
-    image: jeserna/financial-statement-rf:v0.0.27
+    image: jeserna/financial-statement-rf:v0.0.23
     container_name: financial-statement-rf
     env_file:
       - ${SECRETS_DIR:-/opt/secrets}/common-configs.env
